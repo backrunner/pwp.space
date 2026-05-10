@@ -708,15 +708,23 @@ export async function post(props: PostFormProps = {}): Promise<void> {
 	});
 }
 
-export function edit(props: Record<string, any> = {}): Promise<void> {
-	pleaseLogin(undefined, (props.initialText || props.initialNote ? {
-		type: 'share',
-		params: {
-			text: props.initialText ?? props.initialNote.text,
-			visibility: props.initialVisibility ?? props.initialNote?.visibility,
-			localOnly: (props.initialLocalOnly || props.initialNote?.localOnly) ? '1' : '0',
-		},
-	} : undefined));
+export async function edit(props: PostFormProps & {
+	target: Misskey.entities.Note;
+	instant?: boolean;
+	fixed?: boolean;
+	autofocus?: boolean;
+}): Promise<void> {
+	const isLoggedIn = await pleaseLogin({
+		openOnRemote: (props.initialText || props.initialNote ? {
+			type: 'share',
+			params: {
+				text: props.initialText ?? props.initialNote?.text ?? '',
+				visibility: props.initialVisibility ?? props.initialNote?.visibility ?? 'public',
+				localOnly: (props.initialLocalOnly || props.initialNote?.localOnly) ? '1' : '0',
+			},
+		} : undefined),
+	});
+	if (!isLoggedIn) return;
 
 	showMovedDialog();
 	return new Promise(resolve => {
@@ -728,8 +736,6 @@ export function edit(props: Record<string, any> = {}): Promise<void> {
 		});
 	});
 }
-
-export const deckGlobalEvents = new EventEmitter();
 
 /*
 export function checkExistence(fileData: ArrayBuffer): Promise<any> {
