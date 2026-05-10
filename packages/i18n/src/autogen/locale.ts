@@ -10344,6 +10344,7 @@ export interface Locale extends ILocale {
          * このドラフトを使用する
          */
         "useDraft": string;
+        /**
          * フォームの説明を表示
          */
         "showHowToUse": string;
