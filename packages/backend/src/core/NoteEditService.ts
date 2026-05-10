@@ -78,6 +78,10 @@ type Option = {
 	url?: string | null;
 };
 
+type EditOptions = {
+	skipRolePolicyCheck?: boolean;
+};
+
 @Injectable()
 export class NoteEditService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
@@ -145,7 +149,7 @@ export class NoteEditService implements OnApplicationShutdown {
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
 		isCat: MiUser['isCat'];
-	}, targetId: MiNote['id'], data: Option, silent = false, editor?: MiUser): Promise<MiNote> {
+	}, targetId: MiNote['id'], data: Option, silent = false, editor?: MiUser, options?: EditOptions): Promise<MiNote> {
 		const targetNote = await this.notesRepository.findOneByOrFail({ id: targetId });
 
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -153,7 +157,7 @@ export class NoteEditService implements OnApplicationShutdown {
 			throw new Error('No such note');
 		}
 
-		if ((await this.roleService.getUserPolicies(user.id)).canEditNote !== true) {
+		if (!options?.skipRolePolicyCheck && (await this.roleService.getUserPolicies(user.id)).canEditNote !== true) {
 			throw new Error('Edit note is not allowed');
 		}
 
@@ -392,8 +396,8 @@ export class NoteEditService implements OnApplicationShutdown {
 			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
 			// Publish edited event to notify clients
-			this.globalEventService.publishNoteStream(note.id, 'edited', {
-				note: note,
+			this.globalEventService.publishNoteStream(note, 'edited', {
+				note,
 			});
 
 			this.userWebhookService.getActiveWebhooks().then(webhooks => {
