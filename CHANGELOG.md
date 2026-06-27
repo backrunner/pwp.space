@@ -1,3 +1,84 @@
+## 2026.6.0
+
+### General
+- Feat: ジョブキュー管理画面からキューの一時停止/再開ができるように
+- Feat: アンテナのタイムラインから個別のノートを削除できるように
+- Feat: ノート検索で投稿日時の期間を条件に加えられるように(#16035)
+- Fix: コンパネからrootユーザーのパスワードをリセットしようとした際にエラーが通知されない問題を修正
+
+### Client
+- Enhance: ユーザーページのファイルタブでスクロール位置が保持されるように
+- Enhance: ドライブページでスクロール位置が保持されるように
+- Enhance: 絵文字のメニューから直接絵文字パレットに絵文字を追加できるように
+- Fix: URLプレビューのプレイヤーをウィンドウで開いたとき、プレイヤーが読み込まれるまでの間 `Invalid URL` と表示される問題を修正
+- Fix: 一部の実績が正しく表示されない問題を修正
+- Fix: アクセストークン発行時のダイアログのタイトルが「確認コード」となっているのを修正
+- Fix: 一部のUI要素の色が正しく表示されない問題を修正
+  (Cherry-picked from https://github.com/MisskeyIO/misskey/pull/1243)
+- Fix: 「D」キーでダークモードを切り替える際にsyncDeviceDarkModeのチェックがバイパスされる問題を修正
+- Fix: パスキー登録完了時の認証ダイアログの入力値が使われていない問題を修正
+- Fix: メンションのサジェスト時に表示されるアイコン表示が画像サイズ次第で崩れる問題を修正
+- Fix: ノートの下書きをリセットする際、未アップロードのファイルについては添付予定が解除されない問題を修正
+- Fix: ノート編集後にタイムラインやノート詳細が更新されないことがある問題を修正
+- Fix: 画像アップロード時、フレームのキャプション付与が正しく行われないことがある問題を修正
+
+### Server
+- Enhance: リモートノートクリーニングジョブのスキップ処理のパフォーマンス改善
+- Enhance: リモートノートクリーニングジョブの削除対象検索処理のパフォーマンス改善
+- Enhance: ActivityPub の画像添付に width/height を含めるように
+- Enhance: URLプレビューのデフォルトの User Agent に Misskey サーバーのURLを含めるように
+- Fix: backend バンドルで `@tensorflow/tfjs-node` を external に含めず、起動時に `@mapbox/node-pre-gyp` の `find()` が backend の package.json を誤検出して `is not node-pre-gyp ready` エラーを永続的に吐く問題を修正
+- Fix: MemoryKVCacheのキャッシュGC処理において、更新されたキャッシュが期限切れにならないことがある問題を修正
+- Fix: PerUserDriveChart がシステム所有ファイル (userId が null) の更新で `"group"` の非NULL制約違反によりクラッシュする問題を修正 (#17498)
+- Fix: センシティブメディア自動検出周りの依存関係・ファイルの解決に失敗する問題を修正
+- Fix: フォロワー限定投稿を指名投稿で引用した際に、引用した投稿の公開範囲が意図せず変更される問題を修正
+- Fix: `actor` を持たない不正なInboxアクティビティを受信した際に配送ジョブが `TypeError` でクラッシュする問題を修正 (受信時に検証して400で返し、ジョブを積まないように変更)
+- Fix: Startup and shutdown failures (port-in-use, socket permission denied, plugin timeouts, leaked WebSocket connections) are now reported through the misskey logger instead of an UnhandledPromiseRejectionWarning stack trace
+- Fix: リモートのノートに対するメンション数制限が、サーバーが解決できたユーザー数ベースで行われていた問題を修正
+- Fix: セキュリティに関する修正
+
+## 2026.5.4
+
+### General
+- セキュリティに関する修正
+
+### Client
+- Fix: ビルドに失敗することがある問題を修正
+
+
+## 2026.5.3
+
+### General
+- Fix: Dockerで起動に失敗する問題を修正
+
+
+## 2026.5.2
+
+### Note
+- config に `threadPoolSize` オプションが追加されました。
+  - デフォルトは `1` で、ワーカーごとに指定した数のスレッドが作成されます。
+  - スレッドプールは CPU バウンドな処理をオフロードするために使用されるため、みだりに大きな値を指定しないでください。
+
+### General
+- Enhance: Unicode 17.0 に収録されている絵文字の処理・表示に対応
+  - Fluent Emojiや端末ネイティブの絵文字を利用している場合は、最新の絵文字に対応しておらず正しく表示できない可能性があります。絵文字が表示できない場合は、表示に使用する絵文字をTwemojiに切り替えてご利用ください。
+- Enhance: 投稿通知設定したユーザーをリストで見ることができるように
+- 依存関係の更新
+
+### Client
+- Enhance: テーマのプレビュー時、リロードせずにもとのテーマに戻せるように
+- Enhance: Fluent Emojiを更新し、Unicode 15+相当の絵文字の表示に対応
+- Fix: テーマエディター使用時に、最初の変更のみ適用される問題を修正
+- Fix: テーマのプレビュー時、既存のテーマとIDが被っている場合にプレビューできない問題を修正
+- Fix: テーマのインストールエラーの表示を改善
+- Fix: リスト編集画面におけるユーザー追加時のユーザー選択ダイアログにおいて、自身のアカウントが検索結果の一覧に表示されない問題を修正
+- Fix: デッキのカラムから開いたアンテナ・リストの編集ウィンドウを、"ポップアウト"、"新しいタブで表示"、"リンクをコピー"した場合に誤ったリンクが与えられる問題を修正
+- Fix: チャンネルの作成ロールポリシーにて、ヘッダーにロールポリシーの値が表示されない問題を修正
+
+### Server
+- Enhance: RSA 署名処理のオフロード
+
+
 ## 2026.5.1
 
 ### General
@@ -5,7 +86,7 @@
 - Fix: `.devcontainer/compose.yml`のvolumeのマウントパスを修正
 
 ### Client
-- Enhance: ノートの詳細表示での公開範囲の表示を改善  
+- Enhance: ノートの詳細表示での公開範囲の表示を改善
   (Cherry-picked from https://github.com/kokonect-link/cherrypick/commit/ecc75563f4e428b66adccc379bf317b5b21ed8e6)
 - Fix: ロール設定画面でロールをアサイン/アサイン解除した際、リロードしなくても画面に反映されるよう修正
 
@@ -30,7 +111,7 @@
 
 ### Server
 - Enhance: メモリ使用量を削減
-- Enhance: 起動の高速化  
+- Enhance: 起動の高速化
   (Cherry-picked from https://github.com/MisskeyIO/misskey/pull/1410)
 - Enhance: バックエンドの開発モード時の安定性向上
 - Enhance: バックエンドビルド・テスト時に使用する依存関係の整理（swc/esbuild→Rolldown, Jest→Vitest）
@@ -42,13 +123,13 @@
 - Fix: ID生成アルゴリズムにULIDを使用している場合にMisskeyが正しく動作しない問題を修正
 - Fix: リレー経由で届いたノートがリノートとして表示される問題を修正
 - Fix: robots.txtの内容を調整
-- Fix: 特定のユーザーに管理者権限を持つロールが複数ついている際に、取得できるユーザーIDが重複する問題を修正  
+- Fix: 特定のユーザーに管理者権限を持つロールが複数ついている際に、取得できるユーザーIDが重複する問題を修正
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/17ed4108cec4b6bd2fd989db5a9091db91fa37a7)
-- Fix: ブロックしたサーバーからのInboxジョブが蓄積し続ける問題を修正  
+- Fix: ブロックしたサーバーからのInboxジョブが蓄積し続ける問題を修正
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/3f0f4bfe923f2b3a7837017b54841598f421c6ef)
 - Fix: support activity with `actor` as an id string or embedded object in inbox processor and ActivityPub inbox service
 - Fix: コンフィグファイルに `meilisearch` の設定がある状態でほかの検索プロバイダを利用すると、UI上からリモートのノートの検索ができない問題を修正
-- Fix: ノートに関する通知で公開範囲が考慮されていない問題を修正  
+- Fix: ノートに関する通知で公開範囲が考慮されていない問題を修正
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/cbce96c520a138b8bcd16890ff6f2952830fa166 originally presented in https://github.com/yojo-art/cherrypick/pull/743)
 
 ## 2026.3.2

@@ -8,7 +8,7 @@ import SparkMD5 from 'spark-md5';
 import { query } from './url.js';
 
 export const getProxySign = (targetUrl: string, signKey: string): string => {
-	const hash = SparkMD5.hash(`${targetUrl}_${signKey}_${location.origin}`);
+	const hash = SparkMD5.hash(`${targetUrl}_${signKey}_${window.location.origin}`);
 	return hash;
 };
 

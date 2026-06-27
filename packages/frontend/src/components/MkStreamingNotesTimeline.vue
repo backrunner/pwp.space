@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:moveClass="$style.transition_x_move"
 			tag="div"
 		>
-			<template v-for="(note, i) in paginator.items.value" :key="note.id">
+			<template v-for="(note, i) in paginator.items.value" :key="`${note.id}-${note.updatedAt ?? ''}`">
 				<div v-if="i > 0 && isSeparatorNeeded(paginator.items.value[i -1].createdAt, note.createdAt)" :data-scroll-anchor="note.id">
 					<div :class="$style.date">
 						<span><i class="ti ti-chevron-up"></i> {{ getSeparatorInfo(paginator.items.value[i -1].createdAt, note.createdAt)?.prevText }}</span>
@@ -273,12 +273,17 @@ useGlobalEvent('noteDeleted', (noteId) => {
 });
 
 useGlobalEvent('noteUpdated', async (noteId) => {
-	// Fetch the updated note and replace it in the timeline
 	try {
 		const updatedNote = await misskeyApi('notes/show', { noteId });
 		paginator.updateItem(noteId, () => updatedNote);
 	} catch (e) {
 		console.error('Failed to fetch updated note:', e);
+	}
+});
+
+useGlobalEvent('noteRemovedFromAntenna', (antennaId, noteId) => {
+	if (props.src === 'antenna' && props.antenna === antennaId) {
+		paginator.removeItem(noteId);
 	}
 });
 

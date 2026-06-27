@@ -6,6 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <div
 	v-if="!muted && !hideByPlugin && !isDeleted"
+	:key="`${note.updatedAt ?? note.id}-${appearNote.updatedAt ?? appearNote.id}`"
 	ref="rootEl"
 	v-hotkey="keymap"
 	:class="$style.root"
@@ -226,12 +227,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</MkPagination>
 			</div>
 			<div v-else-if="tab === 'histories'">
-			    <MkPagination :pagination="historiesPagination" :disableAutoLoad="true">
-			    	<template #default="{ items }">
-					    <MkNoteHistory v-for="item in items" :key="item.id" :updatedAt="new Date(item.createdAt)" :text="item.text" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
-				    </template>
-			    </MkPagination>
-		    </div>
+				<MkPagination :paginator="historiesPaginator" :forceDisableInfiniteScroll="true">
+					<template #default="{ items }">
+						<MkNoteHistory v-for="item in items" :key="item.id" :updatedAt="new Date(item.createdAt)" :text="item.text ?? ''" :cw="item.cw ?? null" :files="item.files ?? []" :poll="toHistoryPoll(item.poll)" :user="appearNote.user"/>
+					</template>
+				</MkPagination>
+			</div>
 		</div>
 	</template>
 </div>
@@ -247,7 +248,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, markRaw, provide, ref, useTemplateRef } from 'vue';
+import { computed, inject, markRaw, provide, reactive, ref, useTemplateRef } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
 import { isLink } from '@@/js/is-link.js';
@@ -289,6 +290,7 @@ import MkUserCardMini from '@/components/MkUserCardMini.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import MkReactionIcon from '@/components/MkReactionIcon.vue';
 import MkButton from '@/components/MkButton.vue';
+import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import { isEnabledUrlPreview } from '@/utility/url-preview.js';
 import { getAppearNote } from '@/utility/get-appear-note.js';
 import { prefer } from '@/preferences.js';
@@ -306,13 +308,13 @@ const props = withDefaults(defineProps<{
 
 const inChannel = inject(DI.inChannel, null);
 
-let note = deepClone(props.note);
+let initialNote = deepClone(props.note);
 
 // plugin
 const noteViewInterruptors = getPluginHandlers('note_view_interruptor');
 const hideByPlugin = ref(false);
 if (noteViewInterruptors.length > 0) {
-	let result: Misskey.entities.Note | null = deepClone(note);
+	let result: Misskey.entities.Note | null = deepClone(initialNote);
 	for (const interruptor of noteViewInterruptors) {
 		try {
 			result = interruptor.handler(result!) as Misskey.entities.Note | null;
@@ -323,12 +325,13 @@ if (noteViewInterruptors.length > 0) {
 	if (result == null) {
 		hideByPlugin.value = true;
 	} else {
-		note = result as Misskey.entities.Note;
+		initialNote = result as Misskey.entities.Note;
 	}
 }
 
+const note = reactive(initialNote);
 const isRenote = Misskey.note.isPureRenote(note);
-const appearNote = getAppearNote(note) ?? note;
+const appearNote = reactive(getAppearNote(note) ?? note);
 const { $note: $appearNote, subscribe: subscribeManuallyToNoteCapture } = useNoteCapture({
 	note: appearNote,
 	parentNote: note,
@@ -347,8 +350,8 @@ const isDeleted = ref(false);
 const muted = ref($i ? checkWordMute(appearNote, $i, $i.mutedWords) : false);
 const translation = ref<Misskey.entities.NotesTranslateResponse | null>(null);
 const translating = ref(false);
-const parsed = appearNote.text ? mfm.parse(appearNote.text) : null;
-const urls = parsed ? extractUrlFromMfm(parsed).filter((url) => appearNote.renote?.url !== url && appearNote.renote?.uri !== url) : null;
+const parsed = computed(() => appearNote.text ? mfm.parse(appearNote.text) : null);
+const urls = computed(() => parsed.value ? extractUrlFromMfm(parsed.value).filter((url) => appearNote.renote?.url !== url && appearNote.renote?.uri !== url) : null);
 const showTicker = (prefer.s.instanceTicker === 'always') || (prefer.s.instanceTicker === 'remote' && appearNote.user.instance);
 const conversation = ref<Misskey.entities.Note[]>([]);
 const replies = ref<Misskey.entities.Note[]>([]);
@@ -367,6 +370,7 @@ useGlobalEvent('noteUpdated', (noteId) => {
 			// Update the note properties
 			Object.assign(note, updatedNote);
 			Object.assign(appearNote, getAppearNote(updatedNote) ?? updatedNote);
+			muted.value = $i ? checkWordMute(appearNote, $i, $i.mutedWords) : false;
 		}).catch(() => {
 			// If note fetch fails, it might have been deleted
 			isDeleted.value = true;
@@ -433,20 +437,23 @@ const reactionsPaginator = markRaw(new Paginator('notes/reactions', {
 	})),
 }));
 
-const historiesPagination = computed<Paging>(() => ({
-	endpoint: 'notes/histories',
+const historiesPaginator = markRaw(new Paginator('notes/histories', {
 	limit: 10,
-	params: {
-		noteId: appearNote.value.id,
-	},
+	computedParams: computed(() => ({
+		noteId: appearNote.id,
+	})),
 }));
 
-useNoteCapture({
-	rootEl: rootEl,
-	note: appearNote,
-	pureNote: note,
-	isDeletedRef: isDeleted,
-});
+function toHistoryPoll(poll: Misskey.entities.NotesHistoriesResponse[number]['poll']): PollEditorModelValue | undefined {
+	if (poll == null) return undefined;
+
+	return {
+		choices: poll.choices.map(choice => choice.text),
+		multiple: poll.multiple,
+		expiresAt: poll.expiresAt ? new Date(poll.expiresAt).getTime() : null,
+		expiredAfter: null,
+	};
+}
 
 useTooltip(renoteButton, async (showing) => {
 	const anchorElement = renoteButton.value;

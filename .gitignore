@@ -86,3 +86,6 @@ vite.config.local-dev.ts.timestamp-*
 .favorites.json
 .history
 .claude
+
+# Affinity
+*.af~lock~
