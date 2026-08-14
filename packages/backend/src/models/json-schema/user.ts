@@ -675,6 +675,10 @@ export const packedMeDetailedOnlySchema = {
 			type: 'boolean',
 			nullable: true, optional: true,
 		},
+		signupReason: {
+			type: 'string',
+			nullable: true, optional: true,
+		},
 		securityKeysList: {
 			type: 'array',
 			nullable: false, optional: true,

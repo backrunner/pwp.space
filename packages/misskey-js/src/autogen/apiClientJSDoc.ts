@@ -1063,6 +1063,17 @@ declare module '../api.js' {
     /**
      * No description provided.
      *
+     * **Credential required**: *Yes* / **Permission**: *write:admin:unset-mfa*
+     */
+    request<E extends 'admin/unset-mfa', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * No description provided.
+     *
      * **Credential required**: *Yes* / **Permission**: *write:admin:unset-user-avatar*
      */
     request<E extends 'admin/unset-user-avatar', P extends Endpoints[E]['req']>(
@@ -2178,6 +2189,17 @@ declare module '../api.js' {
      * **Credential required**: *Yes* / **Permission**: *read:drive*
      */
     request<E extends 'drive/files/find-by-hash', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * Get a same-origin media proxy URL for a drive file.
+     *
+     * **Credential required**: *Yes* / **Permission**: *read:drive*
+     */
+    request<E extends 'drive/files/get-proxy-url', P extends Endpoints[E]['req']>(
       endpoint: E,
       params: P,
       credential?: string | null,

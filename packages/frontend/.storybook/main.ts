@@ -4,46 +4,40 @@
  */
 
 import { createRequire } from 'node:module';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/vue3-vite';
-import { type Plugin, mergeConfig } from 'vite';
+import { type PluginOption, mergeConfig } from 'vite';
 import turbosnap from 'vite-plugin-turbosnap';
 
 const require = createRequire(import.meta.url);
-const _dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const config = {
 	stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
 	staticDirs: [{ from: '../assets', to: '/client-assets' }],
 	addons: [
-		getAbsolutePath('@storybook/addon-essentials'),
-		getAbsolutePath('@storybook/addon-interactions'),
+		getAbsolutePath('@storybook/addon-docs'),
 		getAbsolutePath('@storybook/addon-links'),
-		getAbsolutePath('@storybook/addon-storysource'),
-		getAbsolutePath('@storybook/addon-mdx-gfm'),
-		resolve(_dirname, '../node_modules/storybook-addon-misskey-theme'),
 	],
 	framework: {
 		name: getAbsolutePath('@storybook/vue3-vite') as '@storybook/vue3-vite',
 		options: {},
 	},
-	docs: {
-		autodocs: 'tag',
-	},
 	core: {
 		disableTelemetry: true,
 	},
 	async viteFinal(config) {
-		const replacePluginForIsChromatic = config.plugins?.findIndex((plugin: Plugin) => plugin && plugin.name === 'replace') ?? -1;
+		const replacePluginForIsChromatic = config.plugins?.findIndex((plugin) => isPluginNamed(plugin, 'replace')) ?? -1;
 		if (~replacePluginForIsChromatic) {
 			config.plugins?.splice(replacePluginForIsChromatic, 1);
 		}
 
-		//pluginsからcreateSearchIndexを削除、複数あるかもしれないので全て削除
-		config.plugins = config.plugins?.filter((plugin: Plugin) => plugin && plugin.name !== 'createSearchIndex') ?? [];
+		// Storybook does not need production-only search indexing or CSS class inlining.
+		config.plugins = config.plugins?.filter((plugin) => (
+			!isPluginNamed(plugin, 'createSearchIndex') &&
+			!isPluginNamed(plugin, 'UnwindCssModuleClassName')
+		)) ?? [];
 
-		return mergeConfig(config, {
+		const mergedConfig = mergeConfig(config, {
 			plugins: [
 				{
 					// XXX: https://github.com/IanVS/vite-plugin-turbosnap/issues/8
@@ -53,18 +47,27 @@ const config = {
 					name: 'fake-turbosnap',
 				},
 			],
+		});
+
+		return {
+			...mergedConfig,
 			build: {
+				...mergedConfig['build'],
 				target: [
 					'chrome108',
 					'firefox109',
 					'safari16',
 				],
 			},
-		});
+		};
 	},
 } satisfies StorybookConfig;
 export default config;
 
 function getAbsolutePath(value: string): string {
 	return dirname(require.resolve(join(value, 'package.json')));
+}
+
+function isPluginNamed(plugin: PluginOption, name: string): boolean {
+	return plugin != null && plugin !== false && !Array.isArray(plugin) && typeof plugin === 'object' && 'name' in plugin && plugin.name === name;
 }

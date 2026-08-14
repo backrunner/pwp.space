@@ -105,6 +105,7 @@ export * as 'admin/system-webhook/list' from './endpoints/admin/system-webhook/l
 export * as 'admin/system-webhook/show' from './endpoints/admin/system-webhook/show.js';
 export * as 'admin/system-webhook/test' from './endpoints/admin/system-webhook/test.js';
 export * as 'admin/system-webhook/update' from './endpoints/admin/system-webhook/update.js';
+export * as 'admin/unset-mfa' from './endpoints/admin/unset-mfa.js';
 export * as 'admin/unset-user-avatar' from './endpoints/admin/unset-user-avatar.js';
 export * as 'admin/unset-user-banner' from './endpoints/admin/unset-user-banner.js';
 export * as 'admin/unsuspend-user' from './endpoints/admin/unsuspend-user.js';
@@ -182,6 +183,7 @@ export * as 'drive/files/create' from './endpoints/drive/files/create.js';
 export * as 'drive/files/delete' from './endpoints/drive/files/delete.js';
 export * as 'drive/files/find' from './endpoints/drive/files/find.js';
 export * as 'drive/files/find-by-hash' from './endpoints/drive/files/find-by-hash.js';
+export * as 'drive/files/get-proxy-url' from './endpoints/drive/files/get-proxy-url.js';
 export * as 'drive/files/show' from './endpoints/drive/files/show.js';
 export * as 'drive/files/update' from './endpoints/drive/files/update.js';
 export * as 'drive/files/move-bulk' from './endpoints/drive/files/move-bulk.js';

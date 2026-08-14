@@ -7,6 +7,7 @@ import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfm-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
 import * as Redis from 'ioredis';
+import RE2 from 're2';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { extractMentions } from '@/misc/extract-mentions.js';
 import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
@@ -57,6 +58,9 @@ import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import { cleanLink } from '@/misc/link-cleaner.js';
+
+const FAST_URL_TESTER = new RE2('https?:\\/\\/');
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -520,6 +524,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 					// specified / direct noteはreject
 					throw new Error('Renote target is not public or home');
 			}
+
+			// ローカルのみをRenoteしたらローカルのみにする
+			if (data.renote.localOnly && data.channel == null) {
+				data.localOnly = true;
+			}
 		}
 
 		// Check blocking
@@ -534,28 +543,44 @@ export class NoteCreateService implements OnApplicationShutdown {
 			}
 		}
 
-		// 返信対象がpublicではないならhomeにする
-		if (data.reply && data.reply.visibility !== 'public' && data.visibility === 'public') {
-			data.visibility = 'home';
-		}
+		if (data.reply) {
+			switch (data.reply.visibility) {
+				case 'public':
+					// public noteは無条件にreply可能
+					break;
+				case 'home':
+					// home noteはhome以下にreply可能
+					if (data.visibility === 'public') {
+						data.visibility = 'home';
+					}
+					break;
+				case 'followers':
+					// followers noteはfollowers以下にreply可能
+					if (data.visibility === 'public' || data.visibility === 'home') {
+						data.visibility = 'followers';
+					}
+					break;
+				case 'specified':
+					// specified / direct noteはspecifiedのみreply可能
+					if (data.visibility !== 'specified') {
+						data.visibility = 'specified';
+					}
+					break;
+			}
 
-		// ローカルのみをRenoteしたらローカルのみにする
-		if (data.renote && data.renote.localOnly && data.channel == null) {
-			data.localOnly = true;
-		}
-
-		// ローカルのみにリプライしたらローカルのみにする
-		if (data.reply && data.reply.localOnly && data.channel == null) {
-			data.localOnly = true;
+			// ローカルのみにリプライしたらローカルのみにする
+			if (data.reply.localOnly && data.channel == null) {
+				data.localOnly = true;
+			}
 		}
 
 		if (data.text) {
 			if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
 				data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
 			}
-			data.text = data.text.trim();
-			if (data.text === '') {
-				data.text = null;
+			data.text = data.text.trim() || null;
+			if (data.text && FAST_URL_TESTER.test(data.text)) {
+				data.text = await cleanLink(data.text);
 			}
 		} else {
 			data.text = null;

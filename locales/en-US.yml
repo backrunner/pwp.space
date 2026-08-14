@@ -52,7 +52,6 @@ copyLink: "Copy link"
 copyRemoteLink: "Copy remote link"
 copyLinkRenote: "Copy renote link"
 delete: "Delete"
-deleteAccountHard: "Physical delete"
 deleteAndEdit: "Delete and edit"
 deleteAndEditConfirm: "Are you sure you want to redraft this note? This means you will lose all reactions, renotes, and replies to it."
 addToList: "Add to list"
@@ -620,6 +619,8 @@ output: "Output"
 script: "Script"
 disablePagesScript: "Disable AiScript on Pages"
 updateRemoteUser: "Update remote user information"
+unsetMfa: "Reset two-factor authentication"
+unsetMfaConfirm: "Are you sure you want to reset two-factor authentication?"
 unsetUserAvatar: "Unset avatar"
 unsetUserAvatarConfirm: "Are you sure you want to unset the avatar?"
 unsetUserBanner: "Unset banner"
@@ -1362,14 +1363,11 @@ information: "About"
 chat: "Chat"
 directMessage: "Chat with user"
 directMessage_short: "Message"
-migrateOldSettings: "Migrate old client settings"
-migrateOldSettings_description: "This should be done automatically but if for some reason the migration was not successful, you can trigger the migration process yourself manually. The current configuration information will be overwritten."
 compress: "Compress"
 right: "Right"
 bottom: "Bottom"
 top: "Top"
 embed: "Embed"
-settingsMigrating: "Settings are being migrated, please wait a moment... (You can also migrate manually later by going to Settings→Others→Migrate old settings)"
 readonly: "Read only"
 goToDeck: "Return to Deck"
 federationJobs: "Federation Jobs"
@@ -1421,6 +1419,8 @@ addToEmojiPalette: "Add to emoji palette"
 emojiPaletteAlreadyAddedConfirm: "This emoji is already included in this emoji palette. Do you want to add it again?"
 append: "Append to end"
 prepend: "Append to beginning"
+urlPreviewSensitiveList: "URL to restrict thumbnail display"
+urlPreviewSensitiveListDescription: "Use spaces to specify AND conditions, and line breaks to specify OR conditions. Enclose text in slashes to use regular expressions. If a match is found, the thumbnail will be hidden."
 _imageEditing:
   _vars:
     caption: "File caption"
@@ -1601,16 +1601,6 @@ _accountSettings:
   mayNotEffectSomeSituations: "These restrictions are simplified. They may not apply in some situations, such as when viewing on a remote server or during moderation."
   notesHavePassedSpecifiedPeriod: "Note that the specified time has passed"
   notesOlderThanSpecifiedDateAndTime: "Notes before the specified date and time"
-flash: Flash
-_flash:
-  contentHidden: Flash Content Hidden
-  poweredByRuffle: Powered by Ruffle.
-  arbitraryCodeExecutionWarning: Always be wary of arbitrary code execution!
-  failedToLoad: 'Flash Content Failed To Load:'
-  isLoading: Flash Content Is Loading
-  loadingRufflePlayer: Loading Ruffle player
-  loadingFlashFile: Loading Flash file
-  cspError: raw.esm.sh could not be accessed, meaning this instance's Content Security Policy is likely out of date. Please contact your instance administrators.
 _abuseUserReport:
   forward: "Forward"
   forwardDescription: "Forward the report to a remote server as an anonymous system account."
@@ -1629,118 +1619,118 @@ _delivery:
     autoSuspendedForNotResponding: "Server is suspended due to no responding"
     softwareSuspended: "Suspended as this software is no longer being distributed to"
 _bubbleGame:
-  howToPlay: How to play
-  hold: Hold
+  howToPlay: "How to play"
+  hold: "Hold"
   _score:
-    score: Score
-    scoreYen: Amount of money earned
-    highScore: High score
-    maxChain: Maximum number of chains
-    yen: '{yen} Yen'
-    estimatedQty: '{qty} Pieces'
-    scoreSweets: '{onigiriQtyWithUnit} Onigiri'
+    score: "Score"
+    scoreYen: "Amount of money earned"
+    highScore: "High score"
+    maxChain: "Maximum number of chains"
+    yen: "{yen} Yen"
+    estimatedQty: "{qty} Pieces"
+    scoreSweets: "{onigiriQtyWithUnit} Onigiri"
   _howToPlay:
-    section1: Adjust the position and drop the object into the box.
-    section2: When two objects of the same type touch each other, they will change into a different object and you score points.
-    section3: The game is over when objects overflow from the box. Aim for a high score by fusing objects together while you avoid overflowing the box!
+    section1: "Adjust the position and drop the object into the box."
+    section2: "When two objects of the same type touch each other, they will change into a different object and you score points."
+    section3: "The game is over when objects overflow from the box. Aim for a high score by fusing objects together while you avoid overflowing the box!"
 _announcement:
-  forExistingUsers: Existing users only
-  forExistingUsersDescription: This announcement will only be shown to users existing at the point of publishment if enabled. If disabled, those newly signing up after it has been posted will also see it.
-  needConfirmationToRead: Require separate read confirmation
-  needConfirmationToReadDescription: A separate prompt to confirm marking this announcement as read will be displayed if enabled. This announcement will also be excluded from any "Mark all as read" functionality.
-  end: Archive announcement
-  tooManyActiveAnnouncementDescription: Having too many active announcements may worsen the user experience. Please consider archiving announcements that have become obsolete.
-  readConfirmTitle: Mark as read?
-  readConfirmText: This will mark the contents of "{title}" as read.
-  shouldNotBeUsedToPresentPermanentInfo: It's best to use announcements to publish fresh and time-bound information, not for information that will be relevant in the long term.
-  dialogAnnouncementUxWarn: Having two or more dialog-style notifications simultaneously can significantly impact the user experience, so please use them carefully.
-  silence: No notification
-  silenceDescription: Turning this on will skip the notification of this announcement and the user won't need to read it.
+  forExistingUsers: "Existing users only"
+  forExistingUsersDescription: "This announcement will only be shown to users existing at the point of publishment if enabled. If disabled, those newly signing up after it has been posted will also see it."
+  needConfirmationToRead: "Require separate read confirmation"
+  needConfirmationToReadDescription: "A separate prompt to confirm marking this announcement as read will be displayed if enabled. This announcement will also be excluded from any \"Mark all as read\" functionality."
+  end: "Archive announcement"
+  tooManyActiveAnnouncementDescription: "Having too many active announcements may worsen the user experience. Please consider archiving announcements that have become obsolete."
+  readConfirmTitle: "Mark as read?"
+  readConfirmText: "This will mark the contents of \"{title}\" as read."
+  shouldNotBeUsedToPresentPermanentInfo: "It's best to use announcements to publish fresh and time-bound information, not for information that will be relevant in the long term."
+  dialogAnnouncementUxWarn: "Having two or more dialog-style notifications simultaneously can significantly impact the user experience, so please use them carefully."
+  silence: "No notification"
+  silenceDescription: "Turning this on will skip the notification of this announcement and the user won't need to read it."
 _initialAccountSetting:
-  accountCreated: Your account was successfully created!
-  letsStartAccountSetup: For starters, let's set up your profile.
-  letsFillYourProfile: First, let's set up your profile.
-  profileSetting: Profile settings
-  privacySetting: Privacy settings
-  theseSettingsCanEditLater: You can always change these settings later.
-  youCanEditMoreSettingsInSettingsPageLater: There are many more settings you can configure from the "Settings" page. Be sure to visit it later.
-  followUsers: Try following some users that interest you to build up your timeline.
-  pushNotificationDescription: Enabling push notifications will allow you to receive notifications from {name} directly on your device.
-  initialAccountSettingCompleted: Profile setup complete!
-  haveFun: Enjoy {name}!
-  youCanContinueTutorial: You can proceed to a tutorial on how to use {name} (Misskey) or you can exit the setup here and start using it immediately.
-  startTutorial: Start Tutorial
-  skipAreYouSure: Really skip profile setup?
-  laterAreYouSure: Really do profile setup later?
+  accountCreated: "Your account was successfully created!"
+  letsStartAccountSetup: "For starters, let's set up your profile."
+  letsFillYourProfile: "First, let's set up your profile."
+  profileSetting: "Profile settings"
+  privacySetting: "Privacy settings"
+  theseSettingsCanEditLater: "You can always change these settings later."
+  youCanEditMoreSettingsInSettingsPageLater: "There are many more settings you can configure from the \"Settings\" page. Be sure to visit it later."
+  followUsers: "Try following some users that interest you to build up your timeline."
+  pushNotificationDescription: "Enabling push notifications will allow you to receive notifications from {name} directly on your device."
+  initialAccountSettingCompleted: "Profile setup complete!"
+  haveFun: "Enjoy {name}!"
+  youCanContinueTutorial: "You can proceed to a tutorial on how to use {name} (Misskey) or you can exit the setup here and start using it immediately."
+  startTutorial: "Start Tutorial"
+  skipAreYouSure: "Really skip profile setup?"
+  laterAreYouSure: "Really do profile setup later?"
 _initialTutorial:
-  launchTutorial: Start Tutorial
-  title: Tutorial
-  wellDone: Well done!
-  skipAreYouSure: Quit Tutorial?
+  launchTutorial: "Start Tutorial"
+  title: "Tutorial"
+  wellDone: "Well done!"
+  skipAreYouSure: "Quit Tutorial?"
   _landing:
-    title: Welcome to the Tutorial
-    description: Here, you can learn the basics of using Misskey and its features.
+    title: "Welcome to the Tutorial"
+    description: "Here, you can learn the basics of using Misskey and its features."
   _note:
-    title: What is a Note?
-    description: Posts on Misskey are called 'Notes.' Notes are arranged chronologically on the timeline and are updated in real-time.
-    reply: Click on this button to reply to a message. It's also possible to reply to replies, continuing the conversation like a thread.
-    renote: You can share that note to your own timeline. You can also quote them with your comments.
-    reaction: You can add reactions to the Note. More details will be explained on the next page.
-    menu: You can view Note details, copy links, and perform various other actions.
+    title: "What is a Note?"
+    description: "Posts on Misskey are called 'Notes.' Notes are arranged chronologically on the timeline and are updated in real-time."
+    reply: "Click on this button to reply to a message. It's also possible to reply to replies, continuing the conversation like a thread."
+    renote: "You can share that note to your own timeline. You can also quote them with your comments."
+    reaction: "You can add reactions to the Note. More details will be explained on the next page."
+    menu: "You can view Note details, copy links, and perform various other actions."
   _reaction:
-    title: What are Reactions?
-    description: Notes can be reacted to with various emojis. Reactions allow you to express nuances that may not be conveyed with just a 'like.'
-    letsTryReacting: Reactions can be added by clicking the '+' button on the note. Try reacting to this sample note!
-    reactToContinue: Add a reaction to proceed.
-    reactNotification: You'll receive real-time notifications when someone reacts to your note.
-    reactDone: You can undo a reaction by pressing the '-' button.
+    title: "What are Reactions?"
+    description: "Notes can be reacted to with various emojis. Reactions allow you to express nuances that may not be conveyed with just a 'like.'"
+    letsTryReacting: "Reactions can be added by clicking the '+' button on the note. Try reacting to this sample note!"
+    reactToContinue: "Add a reaction to proceed."
+    reactNotification: "You'll receive real-time notifications when someone reacts to your note."
+    reactDone: "You can undo a reaction by pressing the '-' button."
   _timeline:
-    title: The Concept of Timelines
-    description1: Misskey provides multiple timelines based on usage (some may not be available depending on the server's policies).
-    home: You can view notes from accounts you follow.
-    local: You can view notes from all users on this server.
-    social: Notes from the Home and Local timelines will be displayed.
-    global: You can view notes from all connected servers.
-    description2: You can switch between timelines at the top of the screen at any time.
-    description3: Additionally, there are list timelines and channel timelines. For more details, please refer to {link}.
+    title: "The Concept of Timelines"
+    description1: "Misskey provides multiple timelines based on usage (some may not be available depending on the server's policies)."
+    home: "You can view notes from accounts you follow."
+    local: "You can view notes from all users on this server."
+    social: "Notes from the Home and Local timelines will be displayed."
+    global: "You can view notes from all connected servers."
+    description2: "You can switch between timelines at the top of the screen at any time."
+    description3: "Additionally, there are list timelines and channel timelines. For more details, please refer to {link}."
   _postNote:
-    title: Note Posting Settings
-    description1: When posting a note on Misskey, various options are available. The posting form looks like this.
+    title: "Note Posting Settings"
+    description1: "When posting a note on Misskey, various options are available. The posting form looks like this."
     _visibility:
-      description: You can limit who can view your note.
-      public: Your note will be visible for all users.
-      home: Public only on the Home timeline. People visiting your profile, via followers, and through renotes can see it.
-      followers: Visible to followers only. Only followers can see it and no one else, and it cannot be renoted by others.
-      direct: Visible only to specified users, and the recipient will be notified. It can be used as an alternative to direct messaging.
-      doNotSendConfidencialOnDirect1: Be careful when sending sensitive information!
-      doNotSendConfidencialOnDirect2: Administrators of the server can see what you write. Be careful with sensitive information when sending direct notes to users on untrusted servers.
-      localOnly: Posting with this flag will not federate the note to other servers. Users on other servers will not be able to view these notes directly, regardless of the display settings above.
+      description: "You can limit who can view your note."
+      public: "Your note will be visible for all users."
+      home: "Public only on the Home timeline. People visiting your profile, via followers, and through renotes can see it."
+      followers: "Visible to followers only. Only followers can see it and no one else, and it cannot be renoted by others."
+      direct: "Visible only to specified users, and the recipient will be notified. It can be used as an alternative to direct messaging."
+      doNotSendConfidencialOnDirect1: "Be careful when sending sensitive information!"
+      doNotSendConfidencialOnDirect2: "Administrators of the server can see what you write. Be careful with sensitive information when sending direct notes to users on untrusted servers."
+      localOnly: "Posting with this flag will not federate the note to other servers. Users on other servers will not be able to view these notes directly, regardless of the display settings above."
     _cw:
-      title: Content Warning
-      description: Instead of the body, the content written in 'comments' field will be displayed. Pressing "read more" will reveal the body.
+      title: "Content Warning"
+      description: "Instead of the body, the content written in 'comments' field will be displayed. Pressing \"read more\" will reveal the body."
       _exampleNote:
-        cw: This will surely make you hungry!
-        note: Just had a chocolate-glazed donut 🍩😋
-      useCases: This is used when following the server guidelines, for necessary notes, or for self-restriction of spoiler or sensitive text.
+        cw: "This will surely make you hungry!"
+        note: "Just had a chocolate-glazed donut 🍩😋"
+      useCases: "This is used when following the server guidelines, for necessary notes, or for self-restriction of spoiler or sensitive text."
   _howToMakeAttachmentsSensitive:
-    title: How to Mark Attachments as Sensitive?
-    description: For attachments that are required by server guidelines or that should not be left intact, add a "sensitive" flag.
-    tryThisFile: Try marking the image attached in this form as sensitive!
+    title: "How to Mark Attachments as Sensitive?"
+    description: "For attachments that are required by server guidelines or that should not be left intact, add a \"sensitive\" flag."
+    tryThisFile: "Try marking the image attached in this form as sensitive!"
     _exampleNote:
-      note: Oops, messed up opening the natto lid...
-    method: To mark an attachment as sensitive, click the file thumbnail, open the menu, and click "Mark as Sensitive."
-    sensitiveSucceeded: When attaching files, please set sensitivities in accordance with the server guidelines.
-    doItToContinue: Mark the attachment file as sensitive to proceed.
+      note: "Oops, messed up opening the natto lid..."
+    method: "To mark an attachment as sensitive, click the file thumbnail, open the menu, and click \"Mark as Sensitive.\""
+    sensitiveSucceeded: "When attaching files, please set sensitivities in accordance with the server guidelines."
+    doItToContinue: "Mark the attachment file as sensitive to proceed."
   _done:
-    title: You've completed the tutorial! 🎉
-    description: The functions introduced here are just a small part. For a more detailed understanding of using Misskey, please refer to {link}.
+    title: "You've completed the tutorial! 🎉"
+    description: "The functions introduced here are just a small part. For a more detailed understanding of using Misskey, please refer to {link}."
 _timelineDescription:
-  home: In the Home timeline, you can see notes from accounts you follow.
-  local: In the Local timeline, you can see notes from all users on this server.
-  social: The Social timeline displays notes from both the Home and Local timelines.
-  global: In the Global timeline, you can see notes from all connected servers.
+  home: "In the Home timeline, you can see notes from accounts you follow."
+  local: "In the Local timeline, you can see notes from all users on this server."
+  social: "The Social timeline displays notes from both the Home and Local timelines."
+  global: "In the Global timeline, you can see notes from all connected servers."
 _serverRules:
-  description: A set of rules to be displayed before registration. Setting a summary of the Terms of Service is recommended.
+  description: "A set of rules to be displayed before registration. Setting a summary of the Terms of Service is recommended."
 _serverSettings:
   iconUrl: "Icon URL"
   appIconDescription: "Specifies the icon to use when {host} is displayed as an app."
@@ -1786,290 +1776,272 @@ _serverSettings:
     localOnly: "Only local content is published, remote content is kept private"
     none: "Everything is private"
 _accountMigration:
-  moveFrom: Migrate another account to this one
-  moveFromSub: Create alias to another account
-  moveFromLabel: 'Original Account #{n}'
-  moveFromDescription: |-
-    You must create an alias for the account to move from on this account.
-    Enter the account to migrate from in the following format: @username@server.example.com
-    To delete the alias, leave the field empty (not recommended).
-  moveTo: Migrate this account to a different one
-  moveToLabel: 'Account to move to:'
-  moveCannotBeUndone: Account migration cannot be undone.
-  moveAccountDescription: |-
-    This will migrate your account to a different one.
-    　・Followers from this account will automatically be migrated to the new account
-    　・This account will unfollow all users it is currently following
-    　・You will be unable to create new notes etc. on this account
-
-    While migration of followers is automatic, you must manually prepare some steps to migrate the list of users you are following. To do so, carry out a follows export that you will later import on the new account in the settings menu. The same procedure applies to your lists as well as your muted and blocked users.
-
-    (This explanation applies to Misskey v13.12.0 and later. Other ActivityPub software, such as Mastodon, might function differently.)
-  moveAccountHowTo: |-
-    To migrate, first create an alias for this account on the account to move to.
-    After you have created the alias, enter the account to move to in the following format: @username@server.example.com
-  startMigration: Migrate
-  migrationConfirm: Really migrate this account to {account}? Once started, this process cannot be stopped or taken back, and you will not be able to use this account in its original state anymore.
-  movedAndCannotBeUndone: |-
-
-    This account has been migrated.
-    Migration cannot be reversed.
-  postMigrationNote: |-
-    This account will unfollow all accounts it is currently following 24 hours after migration finishes.
-    Both the number of follows and followers will then become zero. To avoid your followers from being unable to see followers only posts of this account, they will however continue following this account.
-  movedTo: 'New account:'
+  moveFrom: "Migrate another account to this one"
+  moveFromSub: "Create alias to another account"
+  moveFromLabel: "Original Account #{n}"
+  moveFromDescription: "You must create an alias for the account to move from on this account.\nEnter the account to migrate from in the following format: @username@server.example.com\nTo delete the alias, leave the field empty (not recommended)."
+  moveTo: "Migrate this account to a different one"
+  moveToLabel: "Account to move to:"
+  moveCannotBeUndone: "Account migration cannot be undone."
+  moveAccountDescription: "This will migrate your account to a different one.\n　・Followers from this account will automatically be migrated to the new account\n　・This account will unfollow all users it is currently following\n　・You will be unable to create new notes etc. on this account\n\nWhile migration of followers is automatic, you must manually prepare some steps to migrate the list of users you are following. To do so, carry out a follows export that you will later import on the new account in the settings menu. The same procedure applies to your lists as well as your muted and blocked users.\n\n(This explanation applies to Misskey v13.12.0 and later. Other ActivityPub software, such as Mastodon, might function differently.)"
+  moveAccountHowTo: "To migrate, first create an alias for this account on the account to move to.\nAfter you have created the alias, enter the account to move to in the following format: @username@server.example.com"
+  startMigration: "Migrate"
+  migrationConfirm: "Really migrate this account to {account}? Once started, this process cannot be stopped or taken back, and you will not be able to use this account in its original state anymore."
+  movedAndCannotBeUndone: "\nThis account has been migrated.\nMigration cannot be reversed."
+  postMigrationNote: "This account will unfollow all accounts it is currently following 24 hours after migration finishes.\nBoth the number of follows and followers will then become zero. To avoid your followers from being unable to see followers only posts of this account, they will however continue following this account."
+  movedTo: "New account:"
 _achievements:
-  earnedAt: Unlocked at
+  earnedAt: "Unlocked at"
   _types:
     _notes1:
-      title: just setting up my msky
-      description: Post your first note
-      flavor: Have a good time with Misskey!
+      title: "just setting up my msky"
+      description: "Post your first note"
+      flavor: "Have a good time with Misskey!"
     _notes10:
-      title: Some notes
-      description: Post 10 notes
+      title: "Some notes"
+      description: "Post 10 notes"
     _notes100:
-      title: A lot of notes
-      description: Post 100 notes
+      title: "A lot of notes"
+      description: "Post 100 notes"
     _notes500:
-      title: Covered in notes
-      description: Post 500 notes
+      title: "Covered in notes"
+      description: "Post 500 notes"
     _notes1000:
-      title: A mountain of notes
-      description: Post 1,000 notes
+      title: "A mountain of notes"
+      description: "Post 1,000 notes"
     _notes5000:
-      title: Overflowing notes
-      description: Post 5,000 notes
+      title: "Overflowing notes"
+      description: "Post 5,000 notes"
     _notes10000:
-      title: Supernote
-      description: Post 10,000 notes
+      title: "Supernote"
+      description: "Post 10,000 notes"
     _notes20000:
-      title: Need... more... notes...
-      description: Post 20,000 notes
+      title: "Need... more... notes..."
+      description: "Post 20,000 notes"
     _notes30000:
-      title: Notes notes notes!
-      description: Post 30,000 notes
+      title: "Notes notes notes!"
+      description: "Post 30,000 notes"
     _notes40000:
-      title: Note factory
-      description: Post 40,000 notes
+      title: "Note factory"
+      description: "Post 40,000 notes"
     _notes50000:
-      title: Planet of notes
-      description: Post 50,000 notes
+      title: "Planet of notes"
+      description: "Post 50,000 notes"
     _notes60000:
-      title: Note quasar
-      description: Post 60,000 notes
+      title: "Note quasar"
+      description: "Post 60,000 notes"
     _notes70000:
-      title: Note black hole
-      description: Post 70,000 notes
+      title: "Note black hole"
+      description: "Post 70,000 notes"
     _notes80000:
-      title: Note galaxy
-      description: Post 80,000 notes
+      title: "Note galaxy"
+      description: "Post 80,000 notes"
     _notes90000:
-      title: Note universe
-      description: Post 90,000 notes
+      title: "Note universe"
+      description: "Post 90,000 notes"
     _notes100000:
-      title: ALL YOUR NOTE ARE BELONG TO US
-      description: Post 100,000 notes
-      flavor: You sure have a lot to say.
+      title: "ALL YOUR NOTE ARE BELONG TO US"
+      description: "Post 100,000 notes"
+      flavor: "You sure have a lot to say."
     _login3:
-      title: Beginner I
-      description: Log in for a total of 3 days
-      flavor: Starting today, just call me Misskist
+      title: "Beginner I"
+      description: "Log in for a total of 3 days"
+      flavor: "Starting today, just call me Misskist"
     _login7:
-      title: Beginner II
-      description: Log in for a total of 7 days
-      flavor: Feel like you've gotten the hang of things yet?
+      title: "Beginner II"
+      description: "Log in for a total of 7 days"
+      flavor: "Feel like you've gotten the hang of things yet?"
     _login15:
-      title: Beginner III
-      description: Log in for a total of 15 days
+      title: "Beginner III"
+      description: "Log in for a total of 15 days"
     _login30:
-      title: Misskist I
-      description: Log in for a total of 30 days
+      title: "Misskist I"
+      description: "Log in for a total of 30 days"
     _login60:
-      title: Misskist II
-      description: Log in for a total of 60 days
+      title: "Misskist II"
+      description: "Log in for a total of 60 days"
     _login100:
-      title: Misskist III
-      description: Log in for a total of 100 days
-      flavor: Violent Misskist
+      title: "Misskist III"
+      description: "Log in for a total of 100 days"
+      flavor: "Violent Misskist"
     _login200:
-      title: Regular I
-      description: Log in for a total of 200 days
+      title: "Regular I"
+      description: "Log in for a total of 200 days"
     _login300:
-      title: Regular II
-      description: Log in for a total of 300 days
+      title: "Regular II"
+      description: "Log in for a total of 300 days"
     _login400:
-      title: Regular III
-      description: Log in for a total of 400 days
+      title: "Regular III"
+      description: "Log in for a total of 400 days"
     _login500:
-      title: Expert I
-      description: Log in for a total of 500 days
-      flavor: My friends, it has often been said that I like notes
+      title: "Expert I"
+      description: "Log in for a total of 500 days"
+      flavor: "My friends, it has often been said that I like notes"
     _login600:
-      title: Expert II
-      description: Log in for a total of 600 days
+      title: "Expert II"
+      description: "Log in for a total of 600 days"
     _login700:
-      title: Expert III
-      description: Log in for a total of 700 days
+      title: "Expert III"
+      description: "Log in for a total of 700 days"
     _login800:
-      title: Master of Notes I
-      description: Log in for a total of 800 days
+      title: "Master of Notes I"
+      description: "Log in for a total of 800 days"
     _login900:
-      title: Master of Notes II
-      description: Log in for a total of 900 days
+      title: "Master of Notes II"
+      description: "Log in for a total of 900 days"
     _login1000:
-      title: Master of Notes III
-      description: Log in for a total of 1,000 days
-      flavor: Thank you for using Misskey!
+      title: "Master of Notes III"
+      description: "Log in for a total of 1,000 days"
+      flavor: "Thank you for using Misskey!"
     _noteClipped1:
-      title: Must... clip...
-      description: Clip your first note
+      title: "Must... clip..."
+      description: "Clip your first note"
     _noteFavorited1:
-      title: Stargazer
-      description: Favorite your first note
+      title: "Stargazer"
+      description: "Favorite your first note"
     _myNoteFavorited1:
-      title: Seeking Stars
-      description: Have somebody else favorite one of your notes
+      title: "Seeking Stars"
+      description: "Have somebody else favorite one of your notes"
     _profileFilled:
-      title: Well-prepared
-      description: Set up your profile
+      title: "Well-prepared"
+      description: "Set up your profile"
     _markedAsCat:
-      title: I Am a Cat
-      description: Mark your account as a cat
-      flavor: I'll give you a name later.
+      title: "I Am a Cat"
+      description: "Mark your account as a cat"
+      flavor: "I'll give you a name later."
     _following1:
-      title: Following your first user
-      description: Follow a user
+      title: "Following your first user"
+      description: "Follow a user"
     _following10:
-      title: Keep up... keep up...
-      description: Follow 10 users
+      title: "Keep up... keep up..."
+      description: "Follow 10 users"
     _following50:
-      title: Lots of friends
-      description: Follow 50 accounts
+      title: "Lots of friends"
+      description: "Follow 50 accounts"
     _following100:
-      title: 100 Friends
-      description: Follow 100 accounts
+      title: "100 Friends"
+      description: "Follow 100 accounts"
     _following300:
-      title: Friend overload
-      description: Follow 300 accounts
+      title: "Friend overload"
+      description: "Follow 300 accounts"
     _followers1:
-      title: First follower
-      description: Gain 1 follower
+      title: "First follower"
+      description: "Gain 1 follower"
     _followers10:
-      title: Follow me!
-      description: Gain 10 followers
+      title: "Follow me!"
+      description: "Gain 10 followers"
     _followers50:
-      title: Coming in crowds
-      description: Gain 50 followers
+      title: "Coming in crowds"
+      description: "Gain 50 followers"
     _followers100:
-      title: Popular
-      description: Gain 100 followers
+      title: "Popular"
+      description: "Gain 100 followers"
     _followers300:
-      title: Please form a single line
-      description: Gain 300 followers
+      title: "Please form a single line"
+      description: "Gain 300 followers"
     _followers500:
-      title: Radio Tower
-      description: Gain 500 followers
+      title: "Radio Tower"
+      description: "Gain 500 followers"
     _followers1000:
-      title: Influencer
-      description: Gain 1,000 followers
+      title: "Influencer"
+      description: "Gain 1,000 followers"
     _collectAchievements30:
-      title: Achievement Collector
-      description: Earn 30 achievements
+      title: "Achievement Collector"
+      description: "Earn 30 achievements"
     _viewAchievements3min:
-      title: Likes Achievements
-      description: Look at your list of achievements for at least 3 minutes
+      title: "Likes Achievements"
+      description: "Look at your list of achievements for at least 3 minutes"
     _iLoveMisskey:
-      title: I Love Misskey
-      description: 'Post "I ❤ #Misskey"'
-      flavor: Misskey's development team greatly appreciates your support!
+      title: "I Love Misskey"
+      description: "Post \"I ❤ #Misskey\""
+      flavor: "Misskey's development team greatly appreciates your support!"
     _foundTreasure:
-      title: Treasure Hunt
-      description: You've found the hidden treasure
+      title: "Treasure Hunt"
+      description: "You've found the hidden treasure"
     _client30min:
-      title: Short break
-      description: Keep Misskey opened for at least 30 minutes
+      title: "Short break"
+      description: "Keep Misskey opened for at least 30 minutes"
     _client60min:
-      title: No "Miss" in Misskey
-      description: Keep Misskey opened for at least 60 minutes
+      title: "No \"Miss\" in Misskey"
+      description: "Keep Misskey opened for at least 60 minutes"
     _noteDeletedWithin1min:
-      title: Nevermind
-      description: Delete a note within a minute of posting it
+      title: "Nevermind"
+      description: "Delete a note within a minute of posting it"
     _postedAtLateNight:
-      title: Nocturnal
-      description: Post a note late at night
-      flavor: It's about time to go to bed.
+      title: "Nocturnal"
+      description: "Post a note late at night"
+      flavor: "It's about time to go to bed."
     _postedAt0min0sec:
-      title: Speaking Clock
-      description: Post a note at 00:00
-      flavor: Click Click Click Claaang
+      title: "Speaking Clock"
+      description: "Post a note at 00:00"
+      flavor: "Click Click Click Claaang"
     _selfQuote:
-      title: Self-Reference
-      description: Quote your own note
+      title: "Self-Reference"
+      description: "Quote your own note"
     _htl20npm:
-      title: Flowing Timeline
-      description: Have the speed of your home timeline exceed 20 npm (notes per minute)
+      title: "Flowing Timeline"
+      description: "Have the speed of your home timeline exceed 20 npm (notes per minute)"
     _viewInstanceChart:
-      title: Analyst
-      description: View your instance's charts
+      title: "Analyst"
+      description: "View your instance's charts"
     _outputHelloWorldOnScratchpad:
-      title: Hello, world!
-      description: Output "hello world" in the Scratchpad
+      title: "Hello, world!"
+      description: "Output \"hello world\" in the Scratchpad"
     _open3windows:
-      title: Multi-Window
-      description: Have at least 3 windows open at the same time
+      title: "Multi-Window"
+      description: "Have at least 3 windows open at the same time"
     _driveFolderCircularReference:
-      title: Circular Reference
-      description: Attempt to create a recursively nested folder in Drive
+      title: "Circular Reference"
+      description: "Attempt to create a recursively nested folder in Drive"
     _reactWithoutRead:
-      title: Did you really read that?
-      description: React on a note that's over 100 characters long within 3 seconds of it being posted
+      title: "Did you really read that?"
+      description: "React on a note that's over 100 characters long within 3 seconds of it being posted"
     _clickedClickHere:
-      title: Click here
-      description: You've clicked here
+      title: "Click here"
+      description: "You've clicked here"
     _justPlainLucky:
-      title: Just Plain Lucky
-      description: Has a chance to be obtained with a probability of 0.005% every 10 seconds
+      title: "Just Plain Lucky"
+      description: "Has a chance to be obtained with a probability of 0.005% every 10 seconds"
     _setNameToSyuilo:
-      title: God Complex
-      description: Set your name to "syuilo"
+      title: "God Complex"
+      description: "Set your name to \"syuilo\""
     _passedSinceAccountCreated1:
-      title: One Year Anniversary
-      description: One year has passed since your account was created
+      title: "One Year Anniversary"
+      description: "One year has passed since your account was created"
     _passedSinceAccountCreated2:
-      title: Two Year Anniversary
-      description: Two years have passed since your account was created
+      title: "Two Year Anniversary"
+      description: "Two years have passed since your account was created"
     _passedSinceAccountCreated3:
-      title: Three Year Anniversary
-      description: Three years have passed since your account was created
+      title: "Three Year Anniversary"
+      description: "Three years have passed since your account was created"
     _loggedInOnBirthday:
-      title: Happy Birthday
-      description: Log in on your birthday
+      title: "Happy Birthday"
+      description: "Log in on your birthday"
     _loggedInOnNewYearsDay:
-      title: Happy New Year!
-      description: Logged in on the first day of the year
-      flavor: To another great year on this instance
+      title: "Happy New Year!"
+      description: "Logged in on the first day of the year"
+      flavor: "To another great year on this instance"
     _cookieClicked:
-      title: A game in which you click cookies
-      description: Clicked the cookie
-      flavor: Wait, are you on the correct website?
+      title: "A game in which you click cookies"
+      description: "Clicked the cookie"
+      flavor: "Wait, are you on the correct website?"
     _brainDiver:
-      title: Brain Diver
-      description: Post the link to Brain Diver
-      flavor: Misskey-Misskey La-Tu-Ma
+      title: "Brain Diver"
+      description: "Post the link to Brain Diver"
+      flavor: "Misskey-Misskey La-Tu-Ma"
     _smashTestNotificationButton:
-      title: Test overflow
-      description: Trigger the notification test repeatedly within an extremely short time
+      title: "Test overflow"
+      description: "Trigger the notification test repeatedly within an extremely short time"
     _tutorialCompleted:
-      title: Misskey Elementary Course Diploma
-      description: Tutorial completed
+      title: "Misskey Elementary Course Diploma"
+      description: "Tutorial completed"
     _bubbleGameExplodingHead:
-      title: 🤯
-      description: The biggest object in the bubble game
+      title: "🤯"
+      description: "The biggest object in the bubble game"
     _bubbleGameDoubleExplodingHead:
-      title: Double🤯
-      description: Two of the biggest objects in the bubble game at the same time
-      flavor: You can fill a lunch box like this 🤯 🤯 a bit.
+      title: "Double🤯"
+      description: "Two of the biggest objects in the bubble game at the same time"
+      flavor: "You can fill a lunch box like this 🤯 🤯 a bit."
 _role:
   new: "New role"
   edit: "Edit role"
@@ -2105,14 +2077,13 @@ _role:
   descriptionOfCanEditMembersByModerator: "When turned on, moderators as well as administrators will be able to assign and unassign users to this role. When turned off, only administrators will be able to assign users."
   priority: "Priority"
   _priority:
-    low: Low
-    middle: Medium
-    high: High
+    low: "Low"
+    middle: "Medium"
+    high: "High"
   _options:
     gtlAvailable: "Can view the global timeline"
     ltlAvailable: "Can view the local timeline"
     canPublicNote: "Can send public notes"
-    canEditNote: "Can edit notes"
     mentionMax: "Maximum number of mentions in a note"
     canInvite: "Can create instance invite codes"
     inviteLimit: "Invite limit"
@@ -2155,164 +2126,168 @@ _role:
     scheduledNoteLimit: "Maximum number of simultaneous scheduled notes"
     watermarkAvailable: "Watermark function"
   _condition:
-    roleAssignedTo: Assigned to manual roles
-    isLocal: Local user
-    isRemote: Remote user
-    isCat: Cat Users
-    isBot: Bot Users
-    isSuspended: Suspended user
-    isLocked: Private accounts
-    isExplorable: Effective user of "make an account discoverable"
-    createdLessThan: Less than X has passed since account creation
-    createdMoreThan: More than X has passed since account creation
-    followersLessThanOrEq: Has X or fewer followers
-    followersMoreThanOrEq: Has X or more followers
-    followingLessThanOrEq: Follows X or fewer accounts
-    followingMoreThanOrEq: Follows X or more accounts
-    notesLessThanOrEq: Post count is less than/equal to
-    notesMoreThanOrEq: Post count is greater than/equal to
-    activedMoreThan: Last active time is more than
-    activedLessThan: Last active time is less than
-    and: AND-Condition
-    or: OR-Condition
-    not: NOT-Condition
+    roleAssignedTo: "Assigned to manual roles"
+    isLocal: "Local user"
+    isRemote: "Remote user"
+    isCat: "Cat Users"
+    isBot: "Bot Users"
+    isSuspended: "Suspended user"
+    isLocked: "Private accounts"
+    isExplorable: "Effective user of \"make an account discoverable\""
+    createdLessThan: "Less than X has passed since account creation"
+    createdMoreThan: "More than X has passed since account creation"
+    followersLessThanOrEq: "Has X or fewer followers"
+    followersMoreThanOrEq: "Has X or more followers"
+    followingLessThanOrEq: "Follows X or fewer accounts"
+    followingMoreThanOrEq: "Follows X or more accounts"
+    notesLessThanOrEq: "Post count is less than/equal to"
+    notesMoreThanOrEq: "Post count is greater than/equal to"
+    and: "AND-Condition"
+    or: "OR-Condition"
+    not: "NOT-Condition"
 _sensitiveMediaDetection:
-  description: Reduces the effort of server moderation through automatically recognizing sensitive media via Machine Learning. This will slightly increase the load on the server.
-  sensitivity: Detection sensitivity
-  sensitivityDescription: Reducing the sensitivity will lead to fewer misdetections (false positives) whereas increasing it will lead to fewer missed detections (false negatives).
-  setSensitiveFlagAutomatically: Mark as sensitive
-  setSensitiveFlagAutomaticallyDescription: The results of the internal detection will be retained even if this option is turned off.
-  analyzeVideos: Enable analysis of videos
-  analyzeVideosDescription: Analyzes videos in addition to images. This will slightly increase the load on the server.
+  description: "Reduces the effort of server moderation through automatically recognizing sensitive media via Machine Learning. This will slightly increase the load on the server."
+  sensitivity: "Detection sensitivity"
+  sensitivityDescription: "Reducing the sensitivity will lead to fewer misdetections (false positives) whereas increasing it will lead to fewer missed detections (false negatives)."
+  setSensitiveFlagAutomatically: "Mark as sensitive"
+  setSensitiveFlagAutomaticallyDescription: "The results of the internal detection will be retained even if this option is turned off."
+  analyzeVideos: "Enable analysis of videos"
+  analyzeVideosDescription: "Analyzes videos in addition to images. This will slightly increase the load on the server."
+  externalServiceInfo: "The detection of sensitive media has been offloaded to an external service (sensitive-detector). To use this feature, you must set up a separate service and configure the connection details provided below. If no connection details are configured, no detection will be performed (it will be treated as non-sensitive)."
+  apiUrl: "Detection service endpoint URL"
+  apiUrlDescription: "The base URL for the sensitive-detector service (e.g., http://localhost:3009). If you are connecting to a service on a private network, please allow the target network in the allowedPrivateNetworks setting in the configuration file. If you are using a proxy, please also configure proxyBypassHosts. If left blank, sensitive media detection will not be performed."
+  apiKey: "API key"
+  apiKeyDescription: "Enter this if authentication (Bearer token) is configured on the detector service. If it is not configured, please leave it blank."
+  timeout: "Timeout (Milliseconds)"
+  timeoutDescription: "Timeout duration for each judgment request."
+  maxImagesPerRequest: "Max images per request"
+  maxImagesPerRequestDescription: "Maximum number of images that can be sent in a single request when processing multi-frame at once, such as videos. Any images exceeding this limit will be split and sent sequentially. Please ensure this is set to not exceed the maxParts setting (default: 10) on the detector service. If it exceeds this limit, all items in that chunk will be treated as non-sensitive."
 _emailUnavailable:
-  used: This email address is already being used
-  format: The format of this email address is invalid
-  disposable: Disposable email addresses may not be used
-  mx: This email server is invalid
-  smtp: This email server is not responding
-  banned: You cannot register with this email address
+  used: "This email address is already being used"
+  format: "The format of this email address is invalid"
+  disposable: "Disposable email addresses may not be used"
+  mx: "This email server is invalid"
+  smtp: "This email server is not responding"
+  banned: "You cannot register with this email address"
 _ffVisibility:
-  public: Public
-  followers: Visible to followers only
-  private: Private
+  public: "Public"
+  followers: "Visible to followers only"
+  private: "Private"
 _signup:
-  almostThere: Almost there
-  emailAddressInfo: Please enter your email address. It will not be made public.
-  emailSent: A confirmation email has been sent to your email address ({email}). Please click the included link to complete account creation.
-  approvalPending: Account has been created and is awaiting approval.
-  reasonInfo: Please enter the reason why you would like to join this server.
+  almostThere: "Almost there"
+  emailAddressInfo: "Please enter your email address. It will not be made public."
+  emailSent: "A confirmation email has been sent to your email address ({email}). Please click the included link to complete account creation."
 _accountDelete:
-  accountDelete: Delete account
-  mayTakeTime: As account deletion is a resource-heavy process, it may take some time to complete depending on how much content you have created and how many files you have uploaded.
-  sendEmail: Once account deletion has been completed, an email will be sent to the email address registered to this account.
-  requestAccountDelete: Request account deletion
-  started: Deletion has been started.
-  inProgress: Deletion is currently in progress
+  accountDelete: "Delete account"
+  mayTakeTime: "As account deletion is a resource-heavy process, it may take some time to complete depending on how much content you have created and how many files you have uploaded."
+  sendEmail: "Once account deletion has been completed, an email will be sent to the email address registered to this account."
+  requestAccountDelete: "Request account deletion"
+  started: "Deletion has been started."
+  inProgress: "Deletion is currently in progress"
 _ad:
-  back: Back
-  reduceFrequencyOfThisAd: Show this ad less
-  hide: Hide
-  timezoneinfo: The day of the week is determined from the server's timezone.
-  adsSettings: Ad settings
-  notesPerOneAd: Real-time update ad placement interval (Notes per ad)
-  setZeroToDisable: Set this value to 0 to disable real-time update ads
-  adsTooClose: The current ad interval may significantly worsen the user experience due to being too low.
+  back: "Back"
+  reduceFrequencyOfThisAd: "Show this ad less"
+  hide: "Hide"
+  timezoneinfo: "The day of the week is determined from the server's timezone."
+  adsSettings: "Ad settings"
+  notesPerOneAd: "Real-time update ad placement interval (Notes per ad)"
+  setZeroToDisable: "Set this value to 0 to disable real-time update ads"
+  adsTooClose: "The current ad interval may significantly worsen the user experience due to being too low."
 _forgotPassword:
-  enterEmail: Enter the email address you used to register. A link with which you can reset your password will then be sent to it.
-  ifNoEmail: If you did not use an email during registration, please contact the instance administrator instead.
-  contactAdmin: This instance does not support using email addresses, please contact the instance administrator to reset your password instead.
+  enterEmail: "Enter the email address you used to register. A link with which you can reset your password will then be sent to it."
+  ifNoEmail: "If you did not use an email during registration, please contact the instance administrator instead."
+  contactAdmin: "This instance does not support using email addresses, please contact the instance administrator to reset your password instead."
 _gallery:
-  my: My Gallery
-  liked: Liked Posts
-  like: Like
-  unlike: Remove like
+  my: "My Gallery"
+  liked: "Liked Posts"
+  like: "Like"
+  unlike: "Remove like"
 _email:
   _follow:
-    title: You've got a new follower
+    title: "You've got a new follower"
   _receiveFollowRequest:
-    title: You've received a follow request
+    title: "You've received a follow request"
 _plugin:
-  install: Install plugins
-  installWarn: Please do not install untrustworthy plugins.
-  manage: Manage plugins
-  viewSource: View source
-  viewLog: Show log
+  install: "Install plugins"
+  installWarn: "Please do not install untrustworthy plugins."
+  manage: "Manage plugins"
+  viewSource: "View source"
+  viewLog: "Show log"
 _preferencesBackups:
-  list: Created backups
-  saveNew: Save new backup
-  loadFile: Load from file
-  apply: Apply to this device
-  save: Save changes
-  inputName: Please enter a name for this backup
-  cannotSave: Saving failed
-  nameAlreadyExists: A backup called "{name}" already exists. Please enter a different name.
-  applyConfirm: Do you really want to apply the "{name}" backup to this device? Existing settings of this device will be overwritten.
-  saveConfirm: Save backup as {name}?
-  deleteConfirm: Delete the {name} backup?
-  renameConfirm: Rename this backup from "{old}" to "{new}"?
-  noBackups: No backups exist. You may backup your client settings on this server by using "Create new backup".
-  createdAt: 'Created at: {date} {time}'
-  updatedAt: 'Updated at: {date} {time}'
-  cannotLoad: Loading failed
-  invalidFile: Invalid file format
+  list: "Created backups"
+  saveNew: "Save new backup"
+  loadFile: "Load from file"
+  apply: "Apply to this device"
+  save: "Save changes"
+  inputName: "Please enter a name for this backup"
+  cannotSave: "Saving failed"
+  nameAlreadyExists: "A backup called \"{name}\" already exists. Please enter a different name."
+  applyConfirm: "Do you really want to apply the \"{name}\" backup to this device? Existing settings of this device will be overwritten."
+  saveConfirm: "Save backup as {name}?"
+  deleteConfirm: "Delete the {name} backup?"
+  renameConfirm: "Rename this backup from \"{old}\" to \"{new}\"?"
+  noBackups: "No backups exist. You may backup your client settings on this server by using \"Create new backup\"."
+  createdAt: "Created at: {date} {time}"
+  updatedAt: "Updated at: {date} {time}"
+  cannotLoad: "Loading failed"
+  invalidFile: "Invalid file format"
 _registry:
-  scope: Scope
-  key: Key
-  keys: Keys
-  domain: Domain
-  createKey: Create key
+  scope: "Scope"
+  key: "Key"
+  keys: "Keys"
+  domain: "Domain"
+  createKey: "Create key"
 _aboutMisskey:
-  about: Misskey is open-source software being developed by syuilo since 2014.
-  contributors: Main contributors
-  allContributors: All contributors
-  source: Source code
-  original: Original
-  thisIsModifiedVersion: '{name} uses a modified version of the original Misskey.'
-  translation: Translate Misskey
-  donate: Donate to Misskey
-  morePatrons: We also appreciate the support of many other helpers not listed here. Thank you! 🥰
-  patrons: Patrons
-  projectMembers: Project members
+  about: "Misskey is open-source software being developed by syuilo since 2014."
+  contributors: "Main contributors"
+  allContributors: "All contributors"
+  source: "Source code"
+  original: "Original"
+  thisIsModifiedVersion: "{name} uses a modified version of the original Misskey."
+  translation: "Translate Misskey"
+  donate: "Donate to Misskey"
+  morePatrons: "We also appreciate the support of many other helpers not listed here. Thank you! 🥰"
+  patrons: "Patrons"
+  projectMembers: "Project members"
 _displayOfSensitiveMedia:
-  respect: Hide media marked as sensitive
-  ignore: Display media marked as sensitive
-  force: Hide all media
+  respect: "Hide media marked as sensitive"
+  ignore: "Display media marked as sensitive"
+  force: "Hide all media"
 _instanceTicker:
-  none: Never show
-  remote: Show for remote users
-  always: Always show
+  none: "Never show"
+  remote: "Show for remote users"
+  always: "Always show"
 _serverDisconnectedBehavior:
-  reload: Automatically reload
-  dialog: Show warning dialog
-  quiet: Show unobtrusive warning
-  silent: Show no warning
+  reload: "Automatically reload"
+  dialog: "Show warning dialog"
+  quiet: "Show unobtrusive warning"
 _channel:
-  create: Create channel
-  edit: Edit channel
-  setBanner: Set banner
-  removeBanner: Remove banner
-  featured: Trending
-  owned: Owned
-  following: Followed
-  usersCount: '{n} Participants'
-  notesCount: '{n} Notes'
-  nameAndDescription: Name and description
-  nameOnly: Name only
-  allowRenoteToExternal: Allow renote and quote outside the channel
+  create: "Create channel"
+  edit: "Edit channel"
+  setBanner: "Set banner"
+  removeBanner: "Remove banner"
+  featured: "Trending"
+  owned: "Owned"
+  following: "Followed"
+  usersCount: "{n} Participants"
+  notesCount: "{n} Notes"
+  nameAndDescription: "Name and description"
+  nameOnly: "Name only"
+  allowRenoteToExternal: "Allow renote and quote outside the channel"
 _menuDisplay:
-  sideFull: Side
-  sideIcon: Side (Icons)
-  top: Top
-  hide: Hide
+  sideFull: "Side"
+  sideIcon: "Side (Icons)"
+  top: "Top"
+  hide: "Hide"
 _wordMute:
-  muteWords: Muted words
-  muteWordsDescription: Separate with spaces for an AND condition or with line breaks for an OR condition.
-  muteWordsDescription2: Surround keywords with slashes to use regular expressions.
+  muteWords: "Muted words"
+  muteWordsDescription: "Separate with spaces for an AND condition or with line breaks for an OR condition."
+  muteWordsDescription2: "Surround keywords with slashes to use regular expressions."
 _instanceMute:
-  instanceMuteDescription: This will mute any notes/renotes from the listed instances, including those of users replying to a user from a muted instance.
-  instanceMuteDescription2: Separate with newlines
-  title: Hides notes from listed instances.
-  heading: List of instances to be muted
+  instanceMuteDescription: "This will mute any notes/renotes from the listed instances, including those of users replying to a user from a muted instance."
+  instanceMuteDescription2: "Separate with newlines"
+  title: "Hides notes from listed instances."
+  heading: "List of instances to be muted"
 _theme:
   explore: "Explore Themes"
   install: "Install a theme"
@@ -2387,32 +2362,32 @@ _sfx:
   reaction: "On choosing a reaction"
   chatMessage: "Chat Messages"
 _soundSettings:
-  driveFile: Use an audio file in Drive.
-  driveFileWarn: Select an audio file from Drive.
-  driveFileTypeWarn: This file is not supported
-  driveFileTypeWarnDescription: Select an audio file
-  driveFileDurationWarn: The audio is too long.
-  driveFileDurationWarnDescription: Long audio may disrupt using Misskey. Still continue?
-  driveFileError: It couldn't load the sound. Please change the setting.
+  driveFile: "Use an audio file in Drive."
+  driveFileWarn: "Select an audio file from Drive."
+  driveFileTypeWarn: "This file is not supported"
+  driveFileTypeWarnDescription: "Select an audio file"
+  driveFileDurationWarn: "The audio is too long."
+  driveFileDurationWarnDescription: "Long audio may disrupt using Misskey. Still continue?"
+  driveFileError: "It couldn't load the sound. Please change the setting."
 _ago:
-  future: Future
-  justNow: Just now
-  secondsAgo: '{n}s ago'
-  minutesAgo: '{n}m ago'
-  hoursAgo: '{n}h ago'
-  daysAgo: '{n}d ago'
-  weeksAgo: '{n}w ago'
-  monthsAgo: '{n}mo ago'
-  yearsAgo: '{n}y ago'
-  invalid: None
+  future: "Future"
+  justNow: "Just now"
+  secondsAgo: "{n}s ago"
+  minutesAgo: "{n}m ago"
+  hoursAgo: "{n}h ago"
+  daysAgo: "{n}d ago"
+  weeksAgo: "{n}w ago"
+  monthsAgo: "{n}mo ago"
+  yearsAgo: "{n}y ago"
+  invalid: "None"
 _timeIn:
-  seconds: In {n}s
-  minutes: In {n}m
-  hours: In {n}h
-  days: In {n}d
-  weeks: In {n}w
-  months: In {n}mo
-  years: In {n}y
+  seconds: "In {n}s"
+  minutes: "In {n}m"
+  hours: "In {n}h"
+  days: "In {n}d"
+  weeks: "In {n}w"
+  months: "In {n}mo"
+  years: "In {n}y"
 _time:
   second: "Second(s)"
   minute: "Minute(s)"
@@ -2420,34 +2395,34 @@ _time:
   day: "Day(s)"
   month: "Month(s)"
 _2fa:
-  alreadyRegistered: You have already registered a 2-factor authentication device.
-  registerTOTP: Register authenticator app
-  step1: First, install an authentication app (such as {a} or {b}) on your device.
-  step2: Then, scan the QR code displayed on this screen.
-  step2Uri: Enter the following URI if you are using a desktop program
-  step3Title: Enter an authentication code
-  step3: Enter the authentication code (token) provided by your app to finish setup.
-  setupCompleted: Setup complete
-  step4: From now on, any future login attempts will ask for such a login token.
-  securityKeyNotSupported: Your browser does not support security keys.
-  registerTOTPBeforeKey: Please set up an authenticator app to register a security or pass key.
-  securityKeyInfo: Besides fingerprint or PIN authentication, you can also setup authentication via hardware security keys that support FIDO2 to further secure your account.
-  registerSecurityKey: Register a security or pass key
-  securityKeyName: Enter a key name
-  tapSecurityKey: Please follow your browser to register the security or pass key
-  removeKey: Remove security key
-  removeKeyConfirm: Really delete the {name} key?
-  whyTOTPOnlyRenew: The authenticator app cannot be removed as long as a security key is registered.
-  renewTOTP: Reconfigure authenticator app
-  renewTOTPConfirm: This will cause verification codes from your previous app to stop working
-  renewTOTPOk: Reconfigure
-  renewTOTPCancel: Cancel
-  checkBackupCodesBeforeCloseThisWizard: Before you close this window, please note the following backup codes.
-  backupCodes: Backup codes
-  backupCodesDescription: You can use these codes to gain access to your account in case of becoming unable to use your two-factor authentificator app. Each can only be used once. Please keep them in a safe place.
-  backupCodeUsedWarning: A backup code has been used. Please reconfigure two-factor authentification as soon as possible if you are no longer able to use it.
-  backupCodesExhaustedWarning: All backup codes have been used. Should you lose access to your two-factor authentification app, you will be unable to access this account. Please reconfigure two-factor authentification.
-  moreDetailedGuideHere: Here is detailed guide
+  alreadyRegistered: "You have already registered a 2-factor authentication device."
+  registerTOTP: "Register authenticator app"
+  step1: "First, install an authentication app (such as {a} or {b}) on your device."
+  step2: "Then, scan the QR code displayed on this screen."
+  step2Uri: "Enter the following URI if you are using a desktop program"
+  step3Title: "Enter an authentication code"
+  step3: "Enter the authentication code (token) provided by your app to finish setup."
+  setupCompleted: "Setup complete"
+  step4: "From now on, any future login attempts will ask for such a login token."
+  securityKeyNotSupported: "Your browser does not support security keys."
+  registerTOTPBeforeKey: "Please set up an authenticator app to register a security or pass key."
+  securityKeyInfo: "Besides fingerprint or PIN authentication, you can also setup authentication via hardware security keys that support FIDO2 to further secure your account."
+  registerSecurityKey: "Register a security or pass key"
+  securityKeyName: "Enter a key name"
+  tapSecurityKey: "Please follow your browser to register the security or pass key"
+  removeKey: "Remove security key"
+  removeKeyConfirm: "Really delete the {name} key?"
+  whyTOTPOnlyRenew: "The authenticator app cannot be removed as long as a security key is registered."
+  renewTOTP: "Reconfigure authenticator app"
+  renewTOTPConfirm: "This will cause verification codes from your previous app to stop working"
+  renewTOTPOk: "Reconfigure"
+  renewTOTPCancel: "Cancel"
+  checkBackupCodesBeforeCloseThisWizard: "Before you close this window, please note the following backup codes."
+  backupCodes: "Backup codes"
+  backupCodesDescription: "You can use these codes to gain access to your account in case of becoming unable to use your two-factor authentificator app. Each can only be used once. Please keep them in a safe place."
+  backupCodeUsedWarning: "A backup code has been used. Please reconfigure two-factor authentification as soon as possible if you are no longer able to use it."
+  backupCodesExhaustedWarning: "All backup codes have been used. Should you lose access to your two-factor authentification app, you will be unable to access this account. Please reconfigure two-factor authentification."
+  moreDetailedGuideHere: "Here is detailed guide"
 _permissions:
   "read:account": "View your account information"
   "write:account": "Edit your account information"
@@ -2499,6 +2474,7 @@ _permissions:
   "read:admin:show-moderation-log": "View moderation log"
   "read:admin:show-user": "View private user info"
   "write:admin:suspend-user": "Suspend user"
+  "write:admin:unset-mfa": "Reset two-factor authentication for the user"
   "write:admin:unset-user-avatar": "Remove user avatar"
   "write:admin:unset-user-banner": "Remove user banner"
   "write:admin:unsuspend-user": "Unsuspend user"
@@ -2550,46 +2526,46 @@ _auth:
   byClickingYouWillBeRedirectedToThisUrl: "When access is granted, you will automatically be redirected to the following URL"
   alreadyAuthorized: "This application already has access permission."
 _antennaSources:
-  all: All notes
-  homeTimeline: Notes from followed users
-  users: Notes from specific users
-  userList: Notes from a specified list of users
-  userBlacklist: All notes except for those of one or more specified users
+  all: "All notes"
+  homeTimeline: "Notes from followed users"
+  users: "Notes from specific users"
+  userList: "Notes from a specified list of users"
+  userBlacklist: "All notes except for those of one or more specified users"
 _weekday:
-  sunday: Sunday
-  monday: Monday
-  tuesday: Tuesday
-  wednesday: Wednesday
-  thursday: Thursday
-  friday: Friday
-  saturday: Saturday
+  sunday: "Sunday"
+  monday: "Monday"
+  tuesday: "Tuesday"
+  wednesday: "Wednesday"
+  thursday: "Thursday"
+  friday: "Friday"
+  saturday: "Saturday"
 _widgets:
-  profile: Profile
-  instanceInfo: Instance Information
-  memo: Sticky notes
-  notifications: Notifications
-  timeline: Timeline
-  calendar: Calendar
-  trends: Trending
-  clock: Clock
-  rss: RSS reader
-  rssTicker: RSS-Ticker
-  activity: Activity
-  photos: Photos
-  digitalClock: Digital clock
-  unixClock: UNIX clock
-  federation: Federation
-  instanceCloud: Instance cloud
-  postForm: Posting form
-  slideshow: Slideshow
-  button: Button
-  onlineUsers: Online users
-  jobQueue: Job Queue
-  serverMetric: Server metrics
-  aiscript: AiScript console
-  aiscriptApp: AiScript App
-  aichan: Ai
-  userList: User list
+  profile: "Profile"
+  instanceInfo: "Instance Information"
+  memo: "Sticky notes"
+  notifications: "Notifications"
+  timeline: "Timeline"
+  calendar: "Calendar"
+  trends: "Trending"
+  clock: "Clock"
+  rss: "RSS reader"
+  rssTicker: "RSS-Ticker"
+  activity: "Activity"
+  photos: "Photos"
+  digitalClock: "Digital clock"
+  unixClock: "UNIX clock"
+  federation: "Federation"
+  instanceCloud: "Instance cloud"
+  postForm: "Posting form"
+  slideshow: "Slideshow"
+  button: "Button"
+  onlineUsers: "Online users"
+  jobQueue: "Job Queue"
+  serverMetric: "Server metrics"
+  aiscript: "AiScript console"
+  aiscriptApp: "AiScript App"
+  aichan: "Ai"
+  userList: "User list"
   _userList:
     chooseList: "Select a list"
   clicker: "Clicker"
@@ -2634,50 +2610,49 @@ _widgetOptions:
   _birthdayFollowings:
     period: "Duration"
 _cw:
-  hide: Hide
-  show: Show content
-  chars: '{count} characters'
-  files: '{count} file(s)'
+  hide: "Hide"
+  show: "Show content"
+  chars: "{count} characters"
+  files: "{count} file(s)"
 _poll:
-  noOnlyOneChoice: At least two choices are needed
-  choiceN: Choice {n}
-  noMore: You cannot add more choices
-  canMultipleVote: Allow selecting multiple choices
-  expiration: End poll
-  infinite: Never
-  at: End at...
-  after: End after...
-  deadlineDate: End date
-  deadlineTime: Time
-  duration: Duration
-  votesCount: '{n} votes'
-  totalVotes: '{n} votes in total'
-  vote: Vote
-  showResult: View results
-  voted: Voted
-  closed: Ended
-  remainingDays: '{d} day(s) {h} hour(s) remaining'
-  remainingHours: '{h} hour(s) {m} minute(s) remaining'
-  remainingMinutes: '{m} minute(s) {s} second(s) remaining'
-  remainingSeconds: '{s} second(s) remaining'
+  noOnlyOneChoice: "At least two choices are needed"
+  choiceN: "Choice {n}"
+  noMore: "You cannot add more choices"
+  canMultipleVote: "Allow selecting multiple choices"
+  expiration: "End poll"
+  infinite: "Never"
+  at: "End at..."
+  after: "End after..."
+  deadlineDate: "End date"
+  deadlineTime: "Time"
+  duration: "Duration"
+  votesCount: "{n} votes"
+  totalVotes: "{n} votes in total"
+  vote: "Vote"
+  showResult: "View results"
+  voted: "Voted"
+  closed: "Ended"
+  remainingDays: "{d} day(s) {h} hour(s) remaining"
+  remainingHours: "{h} hour(s) {m} minute(s) remaining"
+  remainingMinutes: "{m} minute(s) {s} second(s) remaining"
+  remainingSeconds: "{s} second(s) remaining"
 _visibility:
-  public: Public
-  publicDescription: Your note will be visible for all users
-  home: Home
-  homeDescription: Post to home timeline only
-  followers: Followers
-  followersDescription: Make visible to your followers only
-  specified: Direct
-  specifiedDescription: Make visible for specified users only
-  disableFederation: Defederate
-  disableFederationDescription: Don't transmit to other instances
+  public: "Public"
+  publicDescription: "Your note will be visible for all users"
+  home: "Home"
+  homeDescription: "Post to home timeline only"
+  followers: "Followers"
+  followersDescription: "Make visible to your followers only"
+  specified: "Direct"
+  specifiedDescription: "Make visible for specified users only"
+  disableFederation: "Defederate"
+  disableFederationDescription: "Don't transmit to other instances"
 _postForm:
   quitInspiteOfThereAreUnuploadedFilesConfirm: "There are files that have not been uploaded, do you want to discard them and close the form?"
   uploaderTip: "The file has not yet been uploaded. From the file menu, you can rename, crop images, watermark and compress or uncompress the file. Files are automatically uploaded when you publish a note."
   replyPlaceholder: "Reply to this note..."
   quotePlaceholder: "Quote this note..."
   channelPlaceholder: "Post to a channel..."
-  useDraft: Use this draft
   showHowToUse: "Show how to use this form"
   _howToUse:
     content_title: "Body"
@@ -2693,140 +2668,140 @@ _postForm:
     submit_title: "Post button"
     submit_description: "Post your notes by pressing this button. You can also post using Ctrl + Enter / Cmd + Enter."
   _placeholders:
-    a: What are you up to?
-    b: What's happening around you?
-    c: What's on your mind?
-    d: What do you want to say?
-    e: Start writing...
-    f: Waiting for you to write...
+    a: "What are you up to?"
+    b: "What's happening around you?"
+    c: "What's on your mind?"
+    d: "What do you want to say?"
+    e: "Start writing..."
+    f: "Waiting for you to write..."
 _profile:
-  name: Name
-  username: Username
-  description: Bio
-  youCanIncludeHashtags: You can also include hashtags in your bio.
-  metadata: Additional Information
-  metadataEdit: Edit additional Information
-  metadataDescription: Using these, you can display additional information fields in your profile.
-  metadataLabel: Label
-  metadataContent: Content
-  changeAvatar: Change avatar
-  changeBanner: Change banner
-  verifiedLinkDescription: By entering an URL that contains a link to your profile here, an ownership verification icon can be displayed next to the field.
-  avatarDecorationMax: You can add up to {max} decorations.
-  followedMessage: Message when you are followed
-  followedMessageDescription: You can set a short message to be displayed to the recipient when they follow you.
-  followedMessageDescriptionForLockedAccount: If you have set up that follow requests require approval, this will be displayed when you grant a follow request.
+  name: "Name"
+  username: "Username"
+  description: "Bio"
+  youCanIncludeHashtags: "You can also include hashtags in your bio."
+  metadata: "Additional Information"
+  metadataEdit: "Edit additional Information"
+  metadataDescription: "Using these, you can display additional information fields in your profile."
+  metadataLabel: "Label"
+  metadataContent: "Content"
+  changeAvatar: "Change avatar"
+  changeBanner: "Change banner"
+  verifiedLinkDescription: "By entering an URL that contains a link to your profile here, an ownership verification icon can be displayed next to the field."
+  avatarDecorationMax: "You can add up to {max} decorations."
+  followedMessage: "Message when you are followed"
+  followedMessageDescription: "You can set a short message to be displayed to the recipient when they follow you."
+  followedMessageDescriptionForLockedAccount: "If you have set up that follow requests require approval, this will be displayed when you grant a follow request."
 _exportOrImport:
-  allNotes: All notes
-  favoritedNotes: Favorite notes
-  clips: Clip
-  followingList: Followed users
-  muteList: Muted users
-  blockingList: Blocked users
-  userLists: User lists
-  excludeMutingUsers: Exclude muted users
-  excludeInactiveUsers: Exclude inactive users
-  withReplies: Include replies from imported users in the timeline
+  allNotes: "All notes"
+  favoritedNotes: "Favorite notes"
+  clips: "Clip"
+  followingList: "Followed users"
+  muteList: "Muted users"
+  blockingList: "Blocked users"
+  userLists: "User lists"
+  excludeMutingUsers: "Exclude muted users"
+  excludeInactiveUsers: "Exclude inactive users"
+  withReplies: "Include replies from imported users in the timeline"
 _charts:
-  federation: Federation
-  apRequest: Requests
-  usersIncDec: Difference in the number of users
-  usersTotal: Total number of users
-  activeUsers: Active users
-  notesIncDec: Difference in the number of notes
-  localNotesIncDec: Difference in the number of local notes
-  remoteNotesIncDec: Difference in the number of remote notes
-  notesTotal: Total number of notes
-  filesIncDec: Difference in the number of files
-  filesTotal: Total number of files
-  storageUsageIncDec: Difference in storage usage
-  storageUsageTotal: Total storage usage
+  federation: "Federation"
+  apRequest: "Requests"
+  usersIncDec: "Difference in the number of users"
+  usersTotal: "Total number of users"
+  activeUsers: "Active users"
+  notesIncDec: "Difference in the number of notes"
+  localNotesIncDec: "Difference in the number of local notes"
+  remoteNotesIncDec: "Difference in the number of remote notes"
+  notesTotal: "Total number of notes"
+  filesIncDec: "Difference in the number of files"
+  filesTotal: "Total number of files"
+  storageUsageIncDec: "Difference in storage usage"
+  storageUsageTotal: "Total storage usage"
 _instanceCharts:
-  requests: Requests
-  users: Difference in the number of users
-  usersTotal: Cumulative number of users
-  notes: Difference in the number of notes
-  notesTotal: Cumulative number of notes
-  ff: 'Difference in the number of followed users / followers '
-  ffTotal: Cumulative number of followed users / followers
-  cacheSize: Difference in cache size
-  cacheSizeTotal: Cumulative total cache size
-  files: Difference in the number of files
-  filesTotal: Cumulative number of files
+  requests: "Requests"
+  users: "Difference in the number of users"
+  usersTotal: "Cumulative number of users"
+  notes: "Difference in the number of notes"
+  notesTotal: "Cumulative number of notes"
+  ff: "Difference in the number of followed users / followers "
+  ffTotal: "Cumulative number of followed users / followers"
+  cacheSize: "Difference in cache size"
+  cacheSizeTotal: "Cumulative total cache size"
+  files: "Difference in the number of files"
+  filesTotal: "Cumulative number of files"
 _timelines:
-  home: Home
-  local: Local
-  social: Social
-  global: Global
+  home: "Home"
+  local: "Local"
+  social: "Social"
+  global: "Global"
 _play:
-  new: Create Play
-  edit: Edit Play
-  created: Play created
-  updated: Play edited
-  deleted: Play deleted
-  pageSetting: Play settings
-  editThisPage: Edit this Play
-  viewSource: View source
-  my: My Plays
-  liked: Liked Plays
-  featured: Popular
-  title: Title
-  script: Script
-  summary: Description
-  visibilityDescription: Putting it private means it won't be visible on your profile, but anyone that has the URL can still access it.
+  new: "Create Play"
+  edit: "Edit Play"
+  created: "Play created"
+  updated: "Play edited"
+  deleted: "Play deleted"
+  pageSetting: "Play settings"
+  editThisPage: "Edit this Play"
+  viewSource: "View source"
+  my: "My Plays"
+  liked: "Liked Plays"
+  featured: "Popular"
+  title: "Title"
+  script: "Script"
+  summary: "Description"
+  visibilityDescription: "Putting it private means it won't be visible on your profile, but anyone that has the URL can still access it."
 _pages:
-  newPage: Create a new Page
-  editPage: Edit this Page
-  readPage: Viewing this Page's source
-  pageSetting: Page settings
-  nameAlreadyExists: The specified Page URL already exists
-  invalidNameTitle: The specified Page URL is invalid
-  invalidNameText: Make sure the Page title is not empty
-  editThisPage: Edit this Page
-  viewSource: View source
-  viewPage: View your Pages
-  like: Like
-  unlike: Remove like
-  my: My Pages
-  liked: Liked Pages
-  featured: Popular
-  inspector: Inspector
-  contents: Contents
-  content: Page block
-  variables: Variables
-  title: Title
-  url: Page URL
-  summary: Page summary
-  alignCenter: Center elements
-  hideTitleWhenPinned: Hide Page title when pinned to profile
-  font: Font
-  fontSerif: Serif
-  fontSansSerif: Sans Serif
-  eyeCatchingImageSet: Set thumbnail
-  eyeCatchingImageRemove: Delete thumbnail
-  chooseBlock: Add a block
-  enterSectionTitle: Enter a section title
-  selectType: Select a type
-  contentBlocks: Content
-  inputBlocks: Input
-  specialBlocks: Special
+  newPage: "Create a new Page"
+  editPage: "Edit this Page"
+  readPage: "Viewing this Page's source"
+  pageSetting: "Page settings"
+  nameAlreadyExists: "The specified Page URL already exists"
+  invalidNameTitle: "The specified Page URL is invalid"
+  invalidNameText: "Make sure the Page title is not empty"
+  editThisPage: "Edit this Page"
+  viewSource: "View source"
+  viewPage: "View your Pages"
+  like: "Like"
+  unlike: "Remove like"
+  my: "My Pages"
+  liked: "Liked Pages"
+  featured: "Popular"
+  inspector: "Inspector"
+  contents: "Contents"
+  content: "Page block"
+  variables: "Variables"
+  title: "Title"
+  url: "Page URL"
+  summary: "Page summary"
+  alignCenter: "Center elements"
+  hideTitleWhenPinned: "Hide Page title when pinned to profile"
+  font: "Font"
+  fontSerif: "Serif"
+  fontSansSerif: "Sans Serif"
+  eyeCatchingImageSet: "Set thumbnail"
+  eyeCatchingImageRemove: "Delete thumbnail"
+  chooseBlock: "Add a block"
+  enterSectionTitle: "Enter a section title"
+  selectType: "Select a type"
+  contentBlocks: "Content"
+  inputBlocks: "Input"
+  specialBlocks: "Special"
   blocks:
-    text: Text
-    textarea: Text area
-    section: Section
-    image: Images
-    button: Button
-    dynamic: Dynamic Blocks
-    dynamicDescription: This block has been abolished. Please use {play} from now on.
-    note: Embedded note
+    text: "Text"
+    textarea: "Text area"
+    section: "Section"
+    image: "Images"
+    button: "Button"
+    dynamic: "Dynamic Blocks"
+    dynamicDescription: "This block has been abolished. Please use {play} from now on."
+    note: "Embedded note"
     _note:
-      id: Note ID
-      idDescription: You can alternatively paste the note URL here.
-      detailed: Detailed view
+      id: "Note ID"
+      idDescription: "You can alternatively paste the note URL here."
+      detailed: "Detailed view"
 _relayStatus:
-  requesting: Pending
-  accepted: Accepted
-  rejected: Rejected
+  requesting: "Pending"
+  accepted: "Accepted"
+  rejected: "Rejected"
 _notification:
   fileUploaded: "File successfully uploaded"
   youGotMention: "{name} mentioned you"
@@ -2881,9 +2856,9 @@ _notification:
     test: "Notification test"
     app: "Notifications from linked apps"
   _actions:
-    followBack: followed you back
-    reply: Reply
-    renote: Renote
+    followBack: "followed you back"
+    reply: "Reply"
+    renote: "Renote"
 _deck:
   alwaysShowMainColumn: "Always show main column"
   columnAlign: "Align columns"
@@ -2930,52 +2905,52 @@ _deck:
     roleTimeline: "Role Timeline"
     chat: "Chat with user"
 _dialog:
-  charactersExceeded: You've exceeded the maximum character limit! Currently at {current} of {max}.
-  charactersBelow: You're below the minimum character limit! Currently at {current} of {min}.
+  charactersExceeded: "You've exceeded the maximum character limit! Currently at {current} of {max}."
+  charactersBelow: "You're below the minimum character limit! Currently at {current} of {min}."
 _disabledTimeline:
-  title: Timeline disabled
-  description: You cannot use this timeline under your current roles.
+  title: "Timeline disabled"
+  description: "You cannot use this timeline under your current roles."
 _drivecleaner:
-  orderBySizeDesc: Descending Filesizes
-  orderByCreatedAtAsc: Ascending Dates
+  orderBySizeDesc: "Descending Filesizes"
+  orderByCreatedAtAsc: "Ascending Dates"
 _webhookSettings:
-  createWebhook: Create Webhook
-  modifyWebhook: Modify Webhook
-  name: Name
-  secret: Secret
-  trigger: Trigger
-  active: Enabled
+  createWebhook: "Create Webhook"
+  modifyWebhook: "Modify Webhook"
+  name: "Name"
+  secret: "Secret"
+  trigger: "Trigger"
+  active: "Enabled"
   _events:
-    follow: When following a user
-    followed: When being followed
-    note: When posting a note
-    reply: When receiving a reply
-    renote: When renoted
-    reaction: When receiving a reaction
-    mention: When being mentioned
+    follow: "When following a user"
+    followed: "When being followed"
+    note: "When posting a note"
+    reply: "When receiving a reply"
+    renote: "When renoted"
+    reaction: "When receiving a reaction"
+    mention: "When being mentioned"
   _systemEvents:
-    abuseReport: When received a new report
-    abuseReportResolved: When resolved report
-    userCreated: When user is created
-    inactiveModeratorsWarning: When moderators have been inactive for a while
-    inactiveModeratorsInvitationOnlyChanged: When a moderator has been inactive for a while, and the server is changed to invitation-only
-  deleteConfirm: Are you sure you want to delete the Webhook?
-  testRemarks: Click the button to the right of the switch to send a test Webhook with dummy data.
+    abuseReport: "When received a new report"
+    abuseReportResolved: "When resolved report"
+    userCreated: "When user is created"
+    inactiveModeratorsWarning: "When moderators have been inactive for a while"
+    inactiveModeratorsInvitationOnlyChanged: "When a moderator has been inactive for a while, and the server is changed to invitation-only"
+  deleteConfirm: "Are you sure you want to delete the Webhook?"
+  testRemarks: "Click the button to the right of the switch to send a test Webhook with dummy data."
 _abuseReport:
   _notificationRecipient:
     createRecipient: "Add recipient for reports"
     modifyRecipient: "Edit a recipient for reports"
     recipientType: "Notification type"
     _recipientType:
-      mail: Email
-      webhook: Webhook
+      mail: "Email"
+      webhook: "Webhook"
       _captions:
-        mail: Send the email to moderators' email addresses when you receive reports.
-        webhook: Send a notification to System Webhook when you receive or resolve reports.
-    keywords: Keywords
-    notifiedUser: Users to notify
-    notifiedWebhook: Webhook to use
-    deleteConfirm: Are you sure that you want to delete the notification recipient?
+        mail: "Send the email to moderators' email addresses when you receive reports."
+        webhook: "Send a notification to System Webhook when you receive or resolve reports."
+    keywords: "Keywords"
+    notifiedUser: "Users to notify"
+    notifiedWebhook: "Webhook to use"
+    deleteConfirm: "Are you sure that you want to delete the notification recipient?"
 _moderationLogTypes:
   clearQueue: "Clear queue"
   promoteQueue: "Promote queue"
@@ -3015,6 +2990,7 @@ _moderationLogTypes:
   createAvatarDecoration: "Avatar decoration created"
   updateAvatarDecoration: "Avatar decoration updated"
   deleteAvatarDecoration: "Avatar decoration deleted"
+  unsetMfa: "Reset two-factor authentication for the user"
   unsetUserAvatar: "User avatar unset"
   unsetUserBanner: "User banner unset"
   createSystemWebhook: "System Webhook created"
@@ -3039,48 +3015,48 @@ _fileViewer:
   usage: "Used"
   thisPageCanBeSeenFromTheAuthor: "This page can only be seen by the user who uploaded this file."
 _externalResourceInstaller:
-  title: Install from external site
-  checkVendorBeforeInstall: Make sure the distributor of this resource is trustworthy before installation.
+  title: "Install from external site"
+  checkVendorBeforeInstall: "Make sure the distributor of this resource is trustworthy before installation."
   _plugin:
     title: "Do you want to install this plugin?"
   _theme:
     title: "Do you want to install this theme?"
   _meta:
-    base: Base color scheme
+    base: "Base color scheme"
   _vendorInfo:
-    title: Distributor information
-    endpoint: Referenced endpoint
-    hashVerify: Hash verification
+    title: "Distributor information"
+    endpoint: "Referenced endpoint"
+    hashVerify: "Hash verification"
   _errors:
     _invalidParams:
-      title: Invalid parameters
-      description: There is not enough information to load data from an external site. Please confirm the entered URL.
+      title: "Invalid parameters"
+      description: "There is not enough information to load data from an external site. Please confirm the entered URL."
     _resourceTypeNotSupported:
-      title: This external resource is not supported
-      description: The type of this external resource is not supported. Please contact the site administrator.
+      title: "This external resource is not supported"
+      description: "The type of this external resource is not supported. Please contact the site administrator."
     _failedToFetch:
-      title: Failed to fetch data
-      fetchErrorDescription: An error occurred communicating with the external site. If trying again does not fix this issue, please contact the site administrator.
-      parseErrorDescription: An error occurred processing the data loaded from the external site. Please contact the site administrator.
+      title: "Failed to fetch data"
+      fetchErrorDescription: "An error occurred communicating with the external site. If trying again does not fix this issue, please contact the site administrator."
+      parseErrorDescription: "An error occurred processing the data loaded from the external site. Please contact the site administrator."
     _hashUnmatched:
-      title: Data verification failed
-      description: An error occurred verifying the integrity of the fetched data. As a security measure, installation cannot continue. Please contact the site administrator.
+      title: "Data verification failed"
+      description: "An error occurred verifying the integrity of the fetched data. As a security measure, installation cannot continue. Please contact the site administrator."
     _pluginParseFailed:
-      title: AiScript Error
-      description: The requested data was fetched successfully, but an error occurred during AiScript parsing. Please contact the plugin author. Error details can be viewed in the Javascript console.
+      title: "AiScript Error"
+      description: "The requested data was fetched successfully, but an error occurred during AiScript parsing. Please contact the plugin author. Error details can be viewed in the Javascript console."
     _pluginInstallFailed:
-      title: Plugin installation failed
-      description: A problem occurred during plugin installation. Please try again. Error details can be viewed in the Javascript console.
+      title: "Plugin installation failed"
+      description: "A problem occurred during plugin installation. Please try again. Error details can be viewed in the Javascript console."
     _themeParseFailed:
-      title: Theme parsing failed
-      description: The requested data was fetched successfully, but an error occurred during theme parsing. Please contact the theme author. Error details can be viewed in the Javascript console.
+      title: "Theme parsing failed"
+      description: "The requested data was fetched successfully, but an error occurred during theme parsing. Please contact the theme author. Error details can be viewed in the Javascript console."
     _themeInstallFailed:
-      title: Failed to install theme
-      description: A problem occurred during theme installation. Please try again. Error details can be viewed in the Javascript console.
+      title: "Failed to install theme"
+      description: "A problem occurred during theme installation. Please try again. Error details can be viewed in the Javascript console."
 _dataSaver:
   _media:
-    title: Loading Media
-    description: Prevents images/videos from being loaded automatically. Hidden images/videos will be loaded when tapped.
+    title: "Loading Media"
+    description: "Prevents images/videos from being loaded automatically. Hidden images/videos will be loaded when tapped."
   _avatar:
     title: "Avatar image"
     description: "Stop avatar image animation. Animated images can be larger in file size than normal images, potentially leading to further reductions in data traffic."
@@ -3091,59 +3067,59 @@ _dataSaver:
     title: "Disable URL preview"
     description: "Disables the URL preview function. Unlike thumbnail images, this function reduces the loading of the linked information itself."
   _code:
-    title: Code highlighting
-    description: If code highlighting notations are used in MFM, etc., they will not load until tapped. Syntax highlighting requires downloading the highlight definition files for each programming language. Therefore, disabling the automatic loading of these files is expected to reduce the amount of communication data.
+    title: "Code highlighting"
+    description: "If code highlighting notations are used in MFM, etc., they will not load until tapped. Syntax highlighting requires downloading the highlight definition files for each programming language. Therefore, disabling the automatic loading of these files is expected to reduce the amount of communication data."
 _hemisphere:
-  'N': Northern Hemisphere
-  S: Southern Hemisphere
-  caption: Used in some client settings to determine season.
+  N: "Northern Hemisphere"
+  S: "Southern Hemisphere"
+  caption: "Used in some client settings to determine season."
 _reversi:
-  reversi: Reversi
-  gameSettings: Game settings
-  chooseBoard: Choose a board
-  blackOrWhite: Black/White
-  blackIs: '{name} is playing Black'
-  rules: Rules
-  thisGameIsStartedSoon: The game will begin shortly
-  waitingForOther: Waiting for opponent's turn
-  waitingForMe: Waiting for your turn
-  waitingBoth: Get ready
-  ready: Ready
-  cancelReady: Not ready
-  opponentTurn: Opponent's turn
-  myTurn: Your turn
-  turnOf: It's {name}'s turn
-  pastTurnOf: '{name}''s turn'
-  surrender: Surrender
-  surrendered: Surrendered
-  timeout: Out of time
-  drawn: Draw
-  won: '{name} wins'
-  black: Black
-  white: White
-  total: Total
-  turnCount: Turn {count}
-  myGames: My rounds
-  allGames: All rounds
-  ended: Ended
-  playing: Currently playing
-  isLlotheo: The one with fewer stones wins (Llotheo)
-  loopedMap: Looping map
-  canPutEverywhere: Tiles are placeable everywhere
-  timeLimitForEachTurn: Time limit for turn
-  freeMatch: Free Match
-  lookingForPlayer: Finding opponent...
-  gameCanceled: The game has been cancelled.
-  shareToTlTheGameWhenStart: Share Game to timeline when started
-  iStartedAGame: 'The game has begun! #MisskeyReversi'
-  opponentHasSettingsChanged: The opponent has changed their settings.
-  allowIrregularRules: Irregular rules (completely free)
-  disallowIrregularRules: No irregular rules
-  showBoardLabels: Display row and column numbering on the board
-  useAvatarAsStone: Turn stones into user avatars
+  reversi: "Reversi"
+  gameSettings: "Game settings"
+  chooseBoard: "Choose a board"
+  blackOrWhite: "Black/White"
+  blackIs: "{name} is playing Black"
+  rules: "Rules"
+  thisGameIsStartedSoon: "The game will begin shortly"
+  waitingForOther: "Waiting for opponent's turn"
+  waitingForMe: "Waiting for your turn"
+  waitingBoth: "Get ready"
+  ready: "Ready"
+  cancelReady: "Not ready"
+  opponentTurn: "Opponent's turn"
+  myTurn: "Your turn"
+  turnOf: "It's {name}'s turn"
+  pastTurnOf: "{name}'s turn"
+  surrender: "Surrender"
+  surrendered: "Surrendered"
+  timeout: "Out of time"
+  drawn: "Draw"
+  won: "{name} wins"
+  black: "Black"
+  white: "White"
+  total: "Total"
+  turnCount: "Turn {count}"
+  myGames: "My rounds"
+  allGames: "All rounds"
+  ended: "Ended"
+  playing: "Currently playing"
+  isLlotheo: "The one with fewer stones wins (Llotheo)"
+  loopedMap: "Looping map"
+  canPutEverywhere: "Tiles are placeable everywhere"
+  timeLimitForEachTurn: "Time limit for turn"
+  freeMatch: "Free Match"
+  lookingForPlayer: "Finding opponent..."
+  gameCanceled: "The game has been cancelled."
+  shareToTlTheGameWhenStart: "Share Game to timeline when started"
+  iStartedAGame: "The game has begun! #MisskeyReversi"
+  opponentHasSettingsChanged: "The opponent has changed their settings."
+  allowIrregularRules: "Irregular rules (completely free)"
+  disallowIrregularRules: "No irregular rules"
+  showBoardLabels: "Display row and column numbering on the board"
+  useAvatarAsStone: "Turn stones into user avatars"
 _offlineScreen:
-  title: Offline - cannot connect to the server
-  header: Unable to connect to the server
+  title: "Offline - cannot connect to the server"
+  header: "Unable to connect to the server"
 _urlPreviewSetting:
   title: "URL preview settings"
   enable: "Enable URL preview"
@@ -3161,22 +3137,22 @@ _urlPreviewSetting:
   summaryProxyDescription: "Not Misskey itself, but generate previews using Summaly Proxy."
   summaryProxyDescription2: "The following parameters are linked to the proxy as a query string. If the proxy does not support them, the values are ignored."
 _mediaControls:
-  pip: Picture in Picture
-  playbackRate: Playback Speed
-  loop: Loop playback
+  pip: "Picture in Picture"
+  playbackRate: "Playback Speed"
+  loop: "Loop playback"
 _contextMenu:
-  title: Context menu
-  app: Application
-  appWithShift: Application with shift key
-  native: Native
+  title: "Context menu"
+  app: "Application"
+  appWithShift: "Application with shift key"
+  native: "Native"
 _gridComponent:
   _error:
-    requiredValue: This value is required
-    columnTypeNotSupport: Validation with regular expression is supported only for type:text columns.
-    patternNotMatch: This value doesn't match the pattern in {pattern}
-    notUnique: This value must be unique
+    requiredValue: "This value is required"
+    columnTypeNotSupport: "Validation with regular expression is supported only for type:text columns."
+    patternNotMatch: "This value doesn't match the pattern in {pattern}"
+    notUnique: "This value must be unique"
 _roleSelectDialog:
-  notSelected: Not selected
+  notSelected: "Not selected"
 _customEmojisManager:
   _gridCommon:
     copySelectionRows: "Copy selected rows"
@@ -3191,16 +3167,16 @@ _customEmojisManager:
     registrationLogsCaption: "Logs will be displayed when updating or deleting Emojis. They will disappear after updating or deleting them, moving to a new page, or reloading."
     alertEmojisRegisterFailedDescription: "Failed to update or delete Emojis. Please check the registration log for details."
   _logs:
-    showSuccessLogSwitch: Show success log
-    failureLogNothing: There is no failure log.
-    logNothing: There is no log.
+    showSuccessLogSwitch: "Show success log"
+    failureLogNothing: "There is no failure log."
+    logNothing: "There is no log."
   _remote:
-    selectionRowDetail: Selected row's detail
-    importSelectionRows: Import selected rows
-    importSelectionRangesRows: Import rows in the selection
-    importEmojisButton: Import checked Emojis
-    confirmImportEmojisTitle: Import Emojis
-    confirmImportEmojisDescription: Import {count} Emoji(s) received from the remote server. Please pay close attention to the license of the Emoji. Are you sure to continue?
+    selectionRowDetail: "Selected row's detail"
+    importSelectionRows: "Import selected rows"
+    importSelectionRangesRows: "Import rows in the selection"
+    importEmojisButton: "Import checked Emojis"
+    confirmImportEmojisTitle: "Import Emojis"
+    confirmImportEmojisDescription: "Import {count} Emoji(s) received from the remote server. Please pay close attention to the license of the Emoji. Are you sure to continue?"
   _local:
     tabTitleList: "Registered emojis"
     tabTitleRegister: "Emoji registration"
@@ -3226,79 +3202,57 @@ _customEmojisManager:
       confirmClearEmojisDescription: "Discard the edits and clear the Emojis from the list. Are you sure to continue?"
       confirmUploadEmojisDescription: "Upload the dragged and dropped {count} file(s) to the drive. Are you sure to continue?"
 _embedCodeGen:
-  title: Customize embed code
-  header: Show header
-  autoload: Automatically load more (deprecated)
-  maxHeight: Max height
-  maxHeightDescription: Setting it to 0 disables the max height setting. Specify some value to prevent the widget from continuing to expand vertically.
-  maxHeightWarn: The max height limit is disabled (0). If this was not intended, set the max height to some value.
-  previewIsNotActual: The display differs from the actual embedding because it exceeds the range displayed on the preview screen.
-  rounded: Make it rounded
-  border: Add a border to the outer frame
-  applyToPreview: Apply to the preview
-  generateCode: Generate embed code
-  codeGenerated: The code has been generated
-  codeGeneratedDescription: Paste the generated code into your website to embed the content.
+  title: "Customize embed code"
+  header: "Show header"
+  autoload: "Automatically load more (deprecated)"
+  maxHeight: "Max height"
+  maxHeightDescription: "Setting it to 0 disables the max height setting. Specify some value to prevent the widget from continuing to expand vertically."
+  maxHeightWarn: "The max height limit is disabled (0). If this was not intended, set the max height to some value."
+  previewIsNotActual: "The display differs from the actual embedding because it exceeds the range displayed on the preview screen."
+  rounded: "Make it rounded"
+  border: "Add a border to the outer frame"
+  applyToPreview: "Apply to the preview"
+  generateCode: "Generate embed code"
+  codeGenerated: "The code has been generated"
+  codeGeneratedDescription: "Paste the generated code into your website to embed the content."
 _selfXssPrevention:
-  warning: WARNING
-  title: '"Paste something on this screen" is all a scam.'
-  description1: If you paste something here, a malicious user could hijack your account or steal your personal information.
-  description2: If you do not understand exactly what you are trying to paste, %cstop working right now and close this window.
-  description3: For more information, please refer to this. {link}
+  warning: "WARNING"
+  title: "\"Paste something on this screen\" is all a scam."
+  description1: "If you paste something here, a malicious user could hijack your account or steal your personal information."
+  description2: "If you do not understand exactly what you are trying to paste, %cstop working right now and close this window."
+  description3: "For more information, please refer to this. {link}"
 _followRequest:
   recieved: "Received request"
   sent: "Sent request"
 _remoteLookupErrors:
   _federationNotAllowed:
-    title: Unable to communicate with this server
-    description: |-
-      Communication with this server may have been disabled or this server may be blocked.
-      Please contact the server administrator.
+    title: "Unable to communicate with this server"
+    description: "Communication with this server may have been disabled or this server may be blocked.\nPlease contact the server administrator."
   _uriInvalid:
-    title: URI is invalid
-    description: There is a problem with the URI you entered. Please check if you entered characters that cannot be used in the URI.
+    title: "URI is invalid"
+    description: "There is a problem with the URI you entered. Please check if you entered characters that cannot be used in the URI."
   _requestFailed:
-    title: Request failed
-    description: Communication with this server failed. The server may be down. Also, please make sure that you have not entered an invalid or nonexistent URI.
+    title: "Request failed"
+    description: "Communication with this server failed. The server may be down. Also, please make sure that you have not entered an invalid or nonexistent URI."
   _responseInvalid:
     title: "Response is invalid"
     description: "It could communicate with this server, but the data obtained was incorrect."
-  _responseInvalidIdHostNotMatch:
-    description: The domain of the entered URI differs from the domain of the final obtained URI. If you are looking up remote content through a third-party server, please look up again using a URI that can be obtained from the origin server.
   _noSuchObject:
-    title: Not found
-    description: The requested resource was not found, please recheck the URI.
+    title: "Not found"
+    description: "The requested resource was not found, please recheck the URI."
 _captcha:
-  verify: Please verify the CAPTCHA
-  testSiteKeyMessage: |-
-    You can check the preview by entering the test values for the site and secret keys.
-    Please see the following page for details.
+  verify: "Please verify the CAPTCHA"
+  testSiteKeyMessage: "You can check the preview by entering the test values for the site and secret keys.\nPlease see the following page for details."
   _error:
     _requestFailed:
-      title: Failed to request CAPTCHA
-      text: Please run it after a while or check the settings again.
+      title: "Failed to request CAPTCHA"
+      text: "Please run it after a while or check the settings again."
     _verificationFailed:
-      title: Failed to validate CAPTCHA
-      text: Please check again if the settings are correct.
+      title: "Failed to validate CAPTCHA"
+      text: "Please check again if the settings are correct."
     _unknown:
-      title: CAPTCHA error
-      text: An unexpected error occurred.
-approvals: recognize
-histories: log
-registerApproveConfirm: Do you wish to approve your registration?
-registerApproveConfirmDescription: This action cannot be undone. After approval, an email will be sent to this user stating that the registration has been approved.
-approvalRequiredForSignup: Make account registration an approval process.
-signupPendingApprovals: Account Registration Approval
-pendingUserApprovals: There is a user waiting for approval.
-approveAccount: Approval.
-denyAccount: Reject and delete account
-approved: approved
-notApproved: Unrecognized
-approvalStatus: Approval Status
-approvalRequiredToRegister: Currently this server is approval only. You can only register if you have provided a reason for wanting to join and have been approved.
-registerReason: Reason for registration
-registerHasNotBeenApprovedYet: Your registration to the server has not yet been approved. Please try again in a while. If you entered your e-mail address during registration, you will be notified by e-mail when your registration has been approved.
-registerApprovalEmailRecommended: It is strongly recommended that an email address be required for account registration, as well as for notification of whether or not the registration to the server has been approved.
+      title: "CAPTCHA error"
+      text: "An unexpected error occurred."
 _bootErrors:
   title: "Failed to load"
   serverError: "If the problem persists after waiting a moment and reloading, please contact the server administrator with the following Error ID."

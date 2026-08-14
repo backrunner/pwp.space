@@ -7,8 +7,12 @@ process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
 import { describe, beforeAll, test } from 'vitest';
-import { api, makeStreamCatcher, post, signup, uploadFile } from '../utils.js';
+import { loadConfig } from '@/config.js';
+import { getProxySign } from '@/misc/media-proxy.js';
+import { api, castAsError, makeStreamCatcher, origin, post, signup, uploadFile } from '../utils.js';
 import type * as misskey from 'misskey-js';
+
+const config = loadConfig();
 
 describe('Drive', () => {
 	let alice: misskey.entities.SignupResponse;
@@ -53,6 +57,40 @@ describe('Drive', () => {
 
 		assert.strictEqual(res.body?.name, 'テスト画像.jpg');
 		assert.strictEqual(res.body.type, 'image/jpeg');
+	});
+
+	test('drive/files/get-proxy-urlは認証を必要とする', async () => {
+		const file = await uploadFile(alice);
+		assert.ok(file.body);
+
+		const res = await api('drive/files/get-proxy-url', { fileId: file.body.id });
+
+		assert.strictEqual(res.status, 401);
+	});
+
+	test('drive/files/get-proxy-urlは他のユーザーのファイルを参照できない', async () => {
+		const file = await uploadFile(alice);
+		assert.ok(file.body);
+
+		const res = await api('drive/files/get-proxy-url', { fileId: file.body.id }, bob);
+
+		assert.strictEqual(res.status, 400);
+		assert.strictEqual(castAsError(res.body).error.code, 'NO_SUCH_FILE');
+	});
+
+	test('drive/files/get-proxy-urlは署名付きの同一オリジンURLを返す', async () => {
+		const file = await uploadFile(alice);
+		assert.ok(file.body);
+
+		const res = await api('drive/files/get-proxy-url', { fileId: file.body.id }, alice);
+
+		assert.strictEqual(res.status, 200);
+		const proxyUrl = new URL(res.body.url);
+		assert.strictEqual(proxyUrl.origin, origin);
+		assert.strictEqual(proxyUrl.pathname, '/proxy/image.webp');
+		assert.strictEqual(proxyUrl.searchParams.get('url'), file.body.url);
+		assert.strictEqual(proxyUrl.searchParams.get('origin'), '1');
+		assert.strictEqual(proxyUrl.searchParams.get('sign'), getProxySign(file.body.url, config.mediaProxyKey, origin));
 	});
 
 	test('添付ノート一覧を取得できる', async () => {

@@ -90,6 +90,7 @@ export interface MainEventTypes {
 	announcementCreated: {
 		announcement: Packed<'Announcement'>;
 	};
+	noteUpdated: MiNote['id'];
 }
 
 export interface DriveEventTypes {

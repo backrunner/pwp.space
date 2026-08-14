@@ -54,7 +54,7 @@ export class DeleteAccountService {
 		}
 
 		if (moderator != null) {
-			this.moderationLogService.log(moderator, 'deleteAccount', {
+			await this.moderationLogService.log(moderator, 'deleteAccount', {
 				userId: user.id,
 				userUsername: _user.username,
 				userHost: user.host,

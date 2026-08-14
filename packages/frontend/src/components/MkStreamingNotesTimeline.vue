@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:moveClass="$style.transition_x_move"
 			tag="div"
 		>
-			<template v-for="(note, i) in paginator.items.value" :key="`${note.id}-${note.updatedAt ?? ''}`">
+			<template v-for="(note, i) in paginator.items.value" :key="getTimelineNoteKey(note)">
 				<div v-if="i > 0 && isSeparatorNeeded(paginator.items.value[i -1].createdAt, note.createdAt)" :data-scroll-anchor="note.id">
 					<div :class="$style.date">
 						<span><i class="ti ti-chevron-up"></i> {{ getSeparatorInfo(paginator.items.value[i -1].createdAt, note.createdAt)?.prevText }}</span>
@@ -78,7 +78,8 @@ import { DI } from '@/di.js';
 import { globalEvents, useGlobalEvent } from '@/events.js';
 import { isSeparatorNeeded, getSeparatorInfo } from '@/utility/timeline-date-separate.js';
 import { Paginator } from '@/utility/paginator.js';
-import { misskeyApi } from '@/utility/misskey-api.js';
+import { fetchLatestNote } from '@/utility/note-refresh.js';
+import { getTimelineNoteKey, updateNoteInTimeline } from '@/utility/update-note-in-timeline.js';
 
 const props = withDefaults(defineProps<{
 	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'channel' | 'role';
@@ -274,8 +275,8 @@ useGlobalEvent('noteDeleted', (noteId) => {
 
 useGlobalEvent('noteUpdated', async (noteId) => {
 	try {
-		const updatedNote = await misskeyApi('notes/show', { noteId });
-		paginator.updateItem(noteId, () => updatedNote);
+		const updatedNote = await fetchLatestNote(noteId);
+		updateNoteInTimeline(paginator, updatedNote);
 	} catch (e) {
 		console.error('Failed to fetch updated note:', e);
 	}

@@ -449,18 +449,21 @@ function toStories(component: string): Promise<string> {
 		globSync('src/components/MkAnnouncementDialog.vue'),
 		globSync('src/components/MkAntennaEditor.vue'),
 		globSync('src/components/MkAntennaEditorDialog.vue'),
+		globSync('src/components/MkApprovalUser.vue'),
 		globSync('src/components/MkAsUi.vue'),
 		globSync('src/components/MkAutocomplete.vue'),
 		globSync('src/components/MkAvatars.vue'),
 		globSync('src/components/Mk[B-E]*.vue'),
 		globSync('src/components/MkFlashPreview.vue'),
+		globSync('src/components/MkFlashPlayer.vue'),
+		globSync('src/components/MkFormula.vue'),
 		globSync('src/components/MkGalleryPostPreview.vue'),
 		globSync('src/components/MkSignupServerRules.vue'),
 		globSync('src/components/MkUserSetupDialog.vue'),
 		globSync('src/components/MkUserSetupDialog.*.vue'),
-		globSync('src/components/MkImgPreviewDialog.vue'),
 		globSync('src/components/MkInstanceCardMini.vue'),
 		globSync('src/components/MkInviteCode.vue'),
+		globSync('src/components/MkNoteHistory.vue'),
 		globSync('src/components/MkTagItem.vue'),
 		globSync('src/components/MkRoleSelectDialog.vue'),
 		globSync('src/components/grid/MkGrid.vue'),
@@ -472,5 +475,5 @@ function toStories(component: string): Promise<string> {
 	await Promise.all(components.map(async (component) => {
 		const stories = component.replace(/\.vue$/, '.stories.ts');
 		await writeFile(stories, await toStories(component));
-	}))
+	}));
 })();

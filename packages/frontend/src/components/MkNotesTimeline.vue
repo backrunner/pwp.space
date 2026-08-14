@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 	<template #default="{ items: notes }">
 		<div :class="[$style.root, { [$style.noGap]: noGap, '_gaps': !noGap }]">
-			<template v-for="(note, i) in notes" :key="`${note.id}-${note.updatedAt ?? ''}`">
+			<template v-for="(note, i) in notes" :key="getTimelineNoteKey(note)">
 				<div
 					v-if="i > 0 && isSeparatorNeeded(paginator.items.value[i - 1].createdAt, note.createdAt)"
 					:data-scroll-anchor="note.id"
@@ -39,6 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup generic="T extends IPaginator<Misskey.entities.Note>">
+import { provide } from 'vue';
 import * as Misskey from 'misskey-js';
 import type { MkPaginationOptions } from '@/components/MkPagination.vue';
 import type { IPaginator } from '@/utility/paginator.js';
@@ -47,7 +48,8 @@ import MkPagination from '@/components/MkPagination.vue';
 import { i18n } from '@/i18n.js';
 import { useGlobalEvent } from '@/events.js';
 import { isSeparatorNeeded, getSeparatorInfo } from '@/utility/timeline-date-separate.js';
-import { misskeyApi } from '@/utility/misskey-api.js';
+import { fetchLatestNote } from '@/utility/note-refresh.js';
+import { getTimelineNoteKey, updateNoteInTimeline } from '@/utility/update-note-in-timeline.js';
 
 const props = withDefaults(defineProps<MkPaginationOptions & {
 	paginator: T;
@@ -60,6 +62,8 @@ const props = withDefaults(defineProps<MkPaginationOptions & {
 	forceDisableInfiniteScroll: false,
 });
 
+provide('inTimeline', true);
+
 useGlobalEvent('noteDeleted', (noteId) => {
 	props.paginator.removeItem(noteId);
 });
@@ -67,8 +71,8 @@ useGlobalEvent('noteDeleted', (noteId) => {
 useGlobalEvent('noteUpdated', async (noteId) => {
 	// Fetch the updated note and replace it in the timeline
 	try {
-		const updatedNote = await misskeyApi('notes/show', { noteId });
-		props.paginator.updateItem(noteId, () => updatedNote);
+		const updatedNote = await fetchLatestNote(noteId);
+		updateNoteInTimeline(props.paginator, updatedNote);
 	} catch (e) {
 		console.error('Failed to fetch updated note:', e);
 	}

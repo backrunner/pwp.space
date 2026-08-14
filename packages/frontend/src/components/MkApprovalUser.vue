@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -38,25 +38,27 @@ import MkFolder from '@/components/MkFolder.vue';
 import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/utility/misskey-api.js';
 
 const props = defineProps<{
-	user: Misskey.entities.User;
+	user: Misskey.entities.UserDetailed;
 }>();
 
 const reason = ref('');
 const email = ref('');
 
-function getReason() {
-	return misskeyApi('admin/show-user', {
-		userId: props.user.id,
-	}).then(info => {
+async function getReason() {
+	try {
+		const info = await os.apiWithDialog('admin/show-user', {
+			userId: props.user.id,
+		});
 		reason.value = info.signupReason ?? '';
 		email.value = info.email ?? '';
-	});
+	} catch {
+		// The API helper already displayed the error.
+	}
 }
 
-getReason();
+void getReason();
 
 const emits = defineEmits<{
 	(event: 'deleted', value: string): void;
@@ -70,19 +72,23 @@ async function deleteAccount() {
 	if (confirm.canceled) return;
 
 	const typed = await os.inputText({
-		text: i18n.t('typeToConfirm', { x: props.user.username }),
+		text: i18n.tsx.typeToConfirm({ x: props.user.username }),
 	});
 	if (typed.canceled) return;
 
 	if (typed.result === props.user.username) {
-		await os.apiWithDialog('admin/delete-account', {
-			userId: props.user.id,
-		});
-		emits('deleted', props.user.id);
+		try {
+			await os.apiWithDialog('admin/delete-account', {
+				userId: props.user.id,
+			});
+			emits('deleted', props.user.id);
+		} catch {
+			// The API helper already displayed the error.
+		}
 	} else {
 		os.alert({
 			type: 'error',
-			text: 'input not match',
+			text: i18n.ts.retypedNotMatch,
 		});
 	}
 }
@@ -94,8 +100,12 @@ async function approveAccount() {
 		text: i18n.ts.registerApproveConfirmDescription,
 	});
 	if (confirm.canceled) return;
-	await misskeyApi('admin/approve-user', { userId: props.user.id });
-	emits('deleted', props.user.id);
+	try {
+		await os.apiWithDialog('admin/approve-user', { userId: props.user.id });
+		emits('deleted', props.user.id);
+	} catch {
+		// The API helper already displayed the error.
+	}
 }
 </script>
 

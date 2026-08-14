@@ -10,14 +10,30 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div :class="$style.banner">
 				<i class="ti ti-user-check"></i>
 			</div>
-			<div class="_gaps_m" style="padding: 32px;">
-				<div>{{ i18n.tsx.clickToFinishEmailVerification({ ok: i18n.ts.gotIt }) }}</div>
-				<div>
-					<MkButton gradate large rounded type="submit" :disabled="submitting" data-cy-admin-ok style="margin: 0 auto;">
-						{{ submitting ? i18n.ts.processing : i18n.ts.gotIt }}<MkEllipsis v-if="submitting"/>
-					</MkButton>
+			<Transition
+				mode="out-in"
+				:enterActiveClass="$style.transition_enterActive"
+				:leaveActiveClass="$style.transition_leaveActive"
+				:enterFromClass="$style.transition_enterFrom"
+				:leaveToClass="$style.transition_leaveTo"
+			>
+				<div v-if="!pendingApproval" key="input" class="_gaps_m" style="padding: 32px;">
+					<div :class="$style.mainText">{{ i18n.tsx.clickToFinishEmailVerification({ ok: i18n.ts.gotIt }) }}</div>
+					<div>
+						<MkButton gradate large rounded type="submit" :disabled="submitting" data-testid="admin-ok" style="margin: 0 auto;">
+							{{ submitting ? i18n.ts.processing : i18n.ts.gotIt }}<MkEllipsis v-if="submitting"/>
+						</MkButton>
+					</div>
 				</div>
-			</div>
+				<div v-else key="pendingApproval" class="_gaps_m" style="padding: 32px;">
+					<div :class="$style.mainText">{{ i18n.ts._signup.approvalPending }}</div>
+					<div>
+						<MkButton large rounded type="routerLink" to="/" linkBehavior="browser" style="margin: 0 auto;">
+							{{ i18n.ts.goToMisskey }}
+						</MkButton>
+					</div>
+				</div>
+			</Transition>
 		</form>
 	</div>
 </PageWithAnimBg>
@@ -32,39 +48,53 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { login } from '@/accounts.js';
 
 const submitting = ref(false);
+const pendingApproval = ref(false);
 
 const props = defineProps<{
 	code: string;
 }>();
 
-function submit() {
+async function submit() {
 	if (submitting.value) return;
 	submitting.value = true;
 
-	misskeyApi('signup-pending', {
-		code: props.code,
-	}).then(res => {
+	try {
+		const res = await misskeyApi('signup-pending', {
+			code: props.code,
+		});
 		if (res.pendingApproval) {
-			return os.alert({
-				type: 'success',
-				title: i18n.ts._signup.almostThere,
-				text: i18n.ts._signup.approvalPending,
-			});
+			pendingApproval.value = true;
+			return;
 		}
-		return login(res.i, '/');
-	}).catch(() => {
-		submitting.value = false;
-
-		os.alert({
+		await login(res.i, '/');
+	} catch {
+		await os.alert({
 			type: 'error',
 			title: i18n.ts.somethingHappened,
 			text: i18n.ts.emailVerificationFailedError,
 		});
-	});
+	} finally {
+		submitting.value = false;
+	}
 }
 </script>
 
 <style lang="scss" module>
+.transition_enterActive,
+.transition_leaveActive {
+	transition: opacity 0.3s cubic-bezier(0,0,.35,1), transform 0.3s cubic-bezier(0,0,.35,1);
+}
+
+.transition_enterFrom {
+	opacity: 0;
+	transform: translateX(50px);
+}
+
+.transition_leaveTo {
+	opacity: 0;
+	transform: translateX(-50px);
+}
+
 .formContainer {
 	min-height: 100svh;
 	padding: 32px 32px 64px 32px;
@@ -88,5 +118,9 @@ function submit() {
 	font-size: 26px;
 	background-color: var(--MI_THEME-accentedBg);
 	color: var(--MI_THEME-accent);
+}
+
+.mainText {
+	text-align: center;
 }
 </style>

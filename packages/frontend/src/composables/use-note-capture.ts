@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { onUnmounted, reactive } from 'vue';
+import { onUnmounted, reactive, watch } from 'vue';
 import * as Misskey from 'misskey-js';
 import { EventEmitter } from 'eventemitter3';
+import { createVisibilityAwareInterval } from '@@/js/interval.js';
 import type { Reactive } from 'vue';
 import type { NoteUpdatedEvent } from 'misskey-js/streaming.types.js';
 import { useStream } from '@/stream.js';
@@ -22,31 +23,36 @@ export const noteEvents = new EventEmitter<{
 }>();
 
 const fetchEvent = new EventEmitter<{
-	[id: string]: Pick<Misskey.entities.Note, 'reactions' | 'reactionEmojis'>;
+	[id: string]: Pick<Misskey.entities.Note, 'updatedAt' | 'reactions' | 'reactionEmojis'>;
 }>();
 
 const pollingQueue = new Map<string, {
 	referenceCount: number;
+	persistentReferenceCount: number;
 	lastAddedAt: number;
+	lastPolledAt: number;
 }>();
 
-function pollingEnqueue(note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>) {
+function pollingEnqueue(note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>, persistent: boolean) {
 	if (pollingQueue.has(note.id)) {
 		const data = pollingQueue.get(note.id)!;
 		pollingQueue.set(note.id, {
 			...data,
 			referenceCount: data.referenceCount + 1,
+			persistentReferenceCount: data.persistentReferenceCount + (persistent ? 1 : 0),
 			lastAddedAt: Date.now(),
 		});
 	} else {
 		pollingQueue.set(note.id, {
 			referenceCount: 1,
+			persistentReferenceCount: persistent ? 1 : 0,
 			lastAddedAt: Date.now(),
+			lastPolledAt: 0,
 		});
 	}
 }
 
-function pollingDequeue(note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>) {
+function pollingDequeue(note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>, persistent: boolean) {
 	const data = pollingQueue.get(note.id);
 	if (data == null) return;
 
@@ -56,11 +62,12 @@ function pollingDequeue(note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>) {
 		pollingQueue.set(note.id, {
 			...data,
 			referenceCount: data.referenceCount - 1,
+			persistentReferenceCount: data.persistentReferenceCount - (persistent ? 1 : 0),
 		});
 	}
 }
 
-const CAPTURE_MAX = 30;
+const CAPTURE_MAX = 100;
 const MIN_POLLING_INTERVAL = 1000 * 10;
 const POLLING_INTERVAL =
 	prefer.s.pollingInterval === 1 ? MIN_POLLING_INTERVAL * 1.5 * 1.5 :
@@ -68,15 +75,35 @@ const POLLING_INTERVAL =
 	prefer.s.pollingInterval === 3 ? MIN_POLLING_INTERVAL :
 	MIN_POLLING_INTERVAL;
 
-window.setInterval(() => {
-	const ids = [...pollingQueue.entries()]
-		.filter(([k, v]) => Date.now() - v.lastAddedAt < 1000 * 60 * 5) // 追加されてから一定時間経過したものは省く
-		.map(([k, v]) => k)
-		.sort((a, b) => (a > b ? -1 : 1)) // 新しいものを優先するためにIDで降順ソート
-		.slice(0, CAPTURE_MAX);
+// documentが非表示の間はポーリングを停止する
+export function selectPollingNoteIds(
+	queue: ReadonlyMap<string, { persistentReferenceCount: number; lastAddedAt: number; lastPolledAt: number }>,
+	now = Date.now(),
+	limit = CAPTURE_MAX,
+): string[] {
+	return [...queue.entries()]
+		.filter(([, v]) => v.persistentReferenceCount > 0 || now - v.lastAddedAt < 1000 * 60 * 5)
+		.sort(([aId, a], [bId, b]) => {
+			if ((a.persistentReferenceCount > 0) !== (b.persistentReferenceCount > 0)) {
+				return a.persistentReferenceCount > 0 ? -1 : 1;
+			}
+			if (a.lastPolledAt !== b.lastPolledAt) return a.lastPolledAt - b.lastPolledAt;
+			if (a.lastAddedAt !== b.lastAddedAt) return b.lastAddedAt - a.lastAddedAt;
+			return aId > bId ? -1 : 1;
+		})
+		.slice(0, limit)
+		.map(([id]) => id);
+}
+
+createVisibilityAwareInterval(() => {
+	const now = Date.now();
+	const ids = selectPollingNoteIds(pollingQueue, now);
+	for (const id of ids) {
+		const entry = pollingQueue.get(id);
+		if (entry != null) pollingQueue.set(id, { ...entry, lastPolledAt: now });
+	}
 
 	if (ids.length === 0) return;
-	if (window.document.hidden) return;
 
 	// まとめてリクエストするのではなく、個別にHTTPリクエスト投げてCDNにキャッシュさせた方がサーバーの負荷低減には良いかもしれない？
 	misskeyApi('notes/show-partial-bulk', {
@@ -84,6 +111,7 @@ window.setInterval(() => {
 	}).then((items) => {
 		for (const item of items) {
 			fetchEvent.emit(item.id, {
+				updatedAt: item.updatedAt,
 				reactions: item.reactions,
 				reactionEmojis: item.reactionEmojis,
 			});
@@ -93,28 +121,23 @@ window.setInterval(() => {
 
 function pollingSubscribe(props: {
 	note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>;
-	$note: ReactiveNoteData;
-}) {
-	const { note, $note } = props;
+	persistent: boolean;
+	onFetched: (data: Pick<Misskey.entities.Note, 'updatedAt' | 'reactions' | 'reactionEmojis'>) => void;
+}): () => void {
+	const { note, persistent, onFetched } = props;
 
-	function onFetched(data: Pick<Misskey.entities.Note, 'reactions' | 'reactionEmojis'>): void {
-		$note.reactions = data.reactions;
-		$note.reactionCount = Object.values(data.reactions).reduce((a, b) => a + b, 0);
-		$note.reactionEmojis = data.reactionEmojis;
-	}
-
-	pollingEnqueue(note);
+	pollingEnqueue(note, persistent);
 	fetchEvent.on(note.id, onFetched);
 
-	onUnmounted(() => {
-		pollingDequeue(note);
+	return () => {
+		pollingDequeue(note, persistent);
 		fetchEvent.off(note.id, onFetched);
-	});
+	};
 }
 
 function realtimeSubscribe(props: {
 	note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>;
-}): void {
+}): () => void {
 	const note = props.note;
 	const connection = useStream();
 
@@ -178,10 +201,10 @@ function realtimeSubscribe(props: {
 	capture(true);
 	connection.on('_connected_', onStreamConnected);
 
-	onUnmounted(() => {
+	return () => {
 		decapture(true);
 		connection.off('_connected_', onStreamConnected);
-	});
+	};
 }
 
 export type ReactiveNoteData = {
@@ -194,40 +217,38 @@ export type ReactiveNoteData = {
 
 const noReaction = Symbol();
 
+function normalizeReactions(reactions: Misskey.entities.Note['reactions']): Misskey.entities.Note['reactions'] {
+	return Object.entries(reactions).reduce((acc, [name, count]) => {
+		const normalizedName = name.replace(/^:(\w+):$/, ':$1@.:');
+		acc[normalizedName] = (acc[normalizedName] ?? 0) + count;
+		return acc;
+	}, {} as Misskey.entities.Note['reactions']);
+}
+
 export function useNoteCapture(props: {
 	note: Misskey.entities.Note;
 	parentNote: Misskey.entities.Note | null;
 	mock?: boolean;
+	forceSubscribe?: boolean;
 }): {
 	$note: Reactive<ReactiveNoteData>;
 	subscribe: () => void;
 } {
-	const { note, parentNote, mock } = props;
+	const { note, parentNote, mock, forceSubscribe } = props;
 
 	const $note = reactive<ReactiveNoteData>({
-		reactions: Object.entries(note.reactions).reduce((acc, [name, count]) => {
-			// Normalize reactions
-			const normalizedName = name.replace(/^:(\w+):$/, ':$1@.:');
-			if (acc[normalizedName] == null) {
-				acc[normalizedName] = count;
-			} else {
-				acc[normalizedName] += count;
-			}
-			return acc;
-		}, {} as Misskey.entities.Note['reactions']),
+		reactions: normalizeReactions(note.reactions),
 		reactionCount: note.reactionCount,
-		reactionEmojis: note.reactionEmojis,
+		reactionEmojis: { ...note.reactionEmojis },
 		myReaction: note.myReaction,
-		pollChoices: note.poll?.choices ?? [],
+		pollChoices: note.poll?.choices.map(choice => ({ ...choice })) ?? [],
 	});
-
-	noteEvents.on(`reacted:${note.id}`, onReacted);
-	noteEvents.on(`unreacted:${note.id}`, onUnreacted);
-	noteEvents.on(`pollVoted:${note.id}`, onPollVoted);
 
 	// 操作がダブっていないかどうかを簡易的に記録するためのMap
 	const reactionUserMap = new Map<Misskey.entities.User['id'], string | typeof noReaction>();
 	let latestPollVotedKey: string | null = null;
+	let subscribed = false;
+	let unsubscribers: Array<() => void> = [];
 
 	function onReacted(ctx: { userId: Misskey.entities.User['id']; reaction: string; emoji?: { name: string; url: string; } | null; }): void {
 		let normalizedName = ctx.reaction.replace(/^:(\w+):$/, ':$1@.:');
@@ -285,29 +306,101 @@ export function useNoteCapture(props: {
 		$note.pollChoices = choices;
 	}
 
+	function getCaptureTargets(): Misskey.entities.Note[] {
+		const targets = [note, parentNote, parentNote?.renote].filter(target => target != null);
+		return [...new Map(targets.map(target => [target.id, target])).values()];
+	}
+
+	function unsubscribeAll(): void {
+		for (const unsubscribe of unsubscribers) unsubscribe();
+		unsubscribers = [];
+	}
+
+	function bindSubscriptions(): void {
+		unsubscribeAll();
+		if (!subscribed) return;
+
+		for (const target of getCaptureTargets()) {
+			const capturedNote = {
+				id: target.id,
+				createdAt: target.createdAt,
+			};
+			if ($i && store.s.realtimeMode) {
+				unsubscribers.push(realtimeSubscribe({ note: capturedNote }));
+			} else {
+				unsubscribers.push(pollingSubscribe({
+					note: capturedNote,
+					persistent: forceSubscribe ?? false,
+					onFetched: (data) => {
+						const currentTarget = getCaptureTargets().find(current => current.id === capturedNote.id);
+						if (note.id === capturedNote.id) {
+							$note.reactions = normalizeReactions(data.reactions);
+							$note.reactionCount = Object.values(data.reactions).reduce((a, b) => a + b, 0);
+							$note.reactionEmojis = { ...data.reactionEmojis };
+						}
+						if (currentTarget != null && (data.updatedAt ?? null) !== (currentTarget.updatedAt ?? null)) {
+							globalEvents.emit('noteUpdated', capturedNote.id);
+						}
+					},
+				}));
+			}
+		}
+	}
+
 	function subscribe() {
-		if (mock) {
+		if (mock || subscribed) {
 			// モックモードでは購読しない
 			return;
 		}
 
-		if ($i && store.s.realtimeMode) {
-			realtimeSubscribe({
-				note,
-			});
-		} else {
-			pollingSubscribe({
-				note,
-				$note,
-			});
-		}
+		subscribed = true;
+		bindSubscriptions();
 	}
 
-	onUnmounted(() => {
-		noteEvents.off(`reacted:${note.id}`, onReacted);
-		noteEvents.off(`unreacted:${note.id}`, onUnreacted);
-		noteEvents.off(`pollVoted:${note.id}`, onPollVoted);
+	watch(() => note.id, (noteId, _oldNoteId, onCleanup) => {
+		reactionUserMap.clear();
+		latestPollVotedKey = null;
+		noteEvents.on(`reacted:${noteId}`, onReacted);
+		noteEvents.on(`unreacted:${noteId}`, onUnreacted);
+		noteEvents.on(`pollVoted:${noteId}`, onPollVoted);
+		onCleanup(() => {
+			noteEvents.off(`reacted:${noteId}`, onReacted);
+			noteEvents.off(`unreacted:${noteId}`, onUnreacted);
+			noteEvents.off(`pollVoted:${noteId}`, onPollVoted);
+		});
+	}, { immediate: true });
+
+	watch(() => ({
+		id: note.id,
+		updatedAt: note.updatedAt,
+		reactions: note.reactions,
+		reactionCount: note.reactionCount,
+		reactionEmojis: note.reactionEmojis,
+		myReaction: note.myReaction,
+		pollChoices: note.poll?.choices,
+	}), () => {
+		$note.reactions = normalizeReactions(note.reactions);
+		$note.reactionCount = note.reactionCount;
+		$note.reactionEmojis = { ...note.reactionEmojis };
+		$note.myReaction = note.myReaction;
+		$note.pollChoices = note.poll?.choices.map(choice => ({ ...choice })) ?? [];
 	});
+
+	watch(() => getCaptureTargets().map(target => target.id).sort().join(':'), () => {
+		bindSubscriptions();
+	});
+
+	onUnmounted(() => {
+		unsubscribeAll();
+	});
+
+	if (forceSubscribe) {
+		subscribe();
+		return {
+			$note,
+			subscribe,
+		};
+	}
 
 	// 投稿からある程度経過している(=タイムラインを遡って表示した)ノートは、イベントが発生する可能性が低いためそもそも購読しない
 	// ただし「リノートされたばかりの過去のノート」(= parentNoteが存在し、かつparentNoteの投稿日時が最近)はイベント発生が考えられるため購読する
@@ -317,9 +410,7 @@ export function useNoteCapture(props: {
 			// リノートで表示されているノートでもないし、投稿からある程度経過しているので自動で購読しない
 			return {
 				$note,
-				subscribe: () => {
-					subscribe();
-				},
+				subscribe,
 			};
 		}
 	} else {
@@ -327,9 +418,7 @@ export function useNoteCapture(props: {
 			// リノートで表示されているノートだが、リノートされてからある程度経過しているので自動で購読しない
 			return {
 				$note,
-				subscribe: () => {
-					subscribe();
-				},
+				subscribe,
 			};
 		}
 	}
@@ -338,8 +427,6 @@ export function useNoteCapture(props: {
 
 	return {
 		$note,
-		subscribe: () => {
-			// すでに購読しているので何もしない
-		},
+		subscribe,
 	};
 }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -8,7 +8,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { isEqual } from 'lodash-es';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFilesRepository, PollsRepository, UsersRepository } from '@/models/_.js';
+import type { DriveFilesRepository, UsersRepository } from '@/models/_.js';
 import { NoteEditService } from '@/core/NoteEditService.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
@@ -20,8 +20,6 @@ export const meta = {
 	tags: ['notes'],
 
 	requireCredential: true,
-	requireRolePolicy: 'canEditNote',
-
 	kind: 'write:notes',
 
 	limit: {
@@ -34,22 +32,32 @@ export const meta = {
 		noSuchNote: {
 			message: 'No such note.',
 			code: 'NO_SUCH_NOTE',
-			id: 'a6584e14-6e01-4ad3-b566-851e7bf0d474',
+			id: '47a99933-dedf-4c7e-94d4-1c8574ff6ef4',
 		},
 		accessDenied: {
 			message: 'Access denied.',
 			code: 'ACCESS_DENIED',
-			id: 'fe8d7103-0ea8-4ec3-814d-f8b401dc69e9',
+			id: '1e19af52-946d-42d5-9440-4104938c5b1b',
 		},
 		cannotEditNote: {
 			message: 'Editing notes are not allowed by the role policy.',
 			code: 'CANNOT_EDIT_NOTE',
-			id: '59ece09c-56ab-4bd5-905c-0f6bbf5af143',
+			id: '15f34c0a-57d6-404e-bc40-6e7c07db88fe',
 		},
 		containsProhibitedWords: {
 			message: 'Cannot post because it contains prohibited words.',
 			code: 'CONTAINS_PROHIBITED_WORDS',
-			id: 'aa6e01d3-a85c-669d-758a-76aab43af334',
+			id: '18f9acb5-112a-4c7e-8ccd-89e333f5a8c9',
+		},
+		noSuchFile: {
+			message: 'No such file.',
+			code: 'NO_SUCH_FILE',
+			id: '115dd131-af41-4e96-a1b4-d4194e19e3b7',
+		},
+		invalidNoteContent: {
+			message: 'A note must contain text, a file, a poll, or a renote.',
+			code: 'INVALID_NOTE_CONTENT',
+			id: '364ae9ca-0815-40b1-b49d-59d3135f0c68',
 		},
 	},
 } as const;
@@ -62,6 +70,7 @@ export const paramDef = {
 			type: 'string',
 			minLength: 1,
 			maxLength: MAX_NOTE_TEXT_LENGTH,
+			pattern: '[^\\s]+',
 			nullable: true,
 		},
 		cw: {
@@ -72,67 +81,22 @@ export const paramDef = {
 		fileIds: {
 			type: 'array',
 			uniqueItems: true,
-			minItems: 1,
+			minItems: 0,
 			maxItems: 16,
 			items: { type: 'string', format: 'misskey:id' },
 		},
-		poll: {
-			type: 'object',
-			nullable: true,
-			properties: {
-				choices: {
-					type: 'array',
-					uniqueItems: true,
-					minItems: 2,
-					maxItems: 10,
-					items: { type: 'string', minLength: 1, maxLength: 50 },
-				},
-				multiple: { type: 'boolean' },
-				expiresAt: { type: 'integer', nullable: true },
-				expiredAfter: { type: 'integer', nullable: true, minimum: 1 },
-			},
-			required: ['choices'],
-		},
-	},
-	// (re)note with text, files and poll are optional
-	if: {
-		properties: {
-			renoteId: {
-				type: 'null',
-			},
-			fileIds: {
-				type: 'null',
-			},
-			poll: {
-				type: 'null',
-			},
-		},
-	},
-	then: {
-		properties: {
-			text: {
-				type: 'string',
-				minLength: 1,
-				maxLength: MAX_NOTE_TEXT_LENGTH,
-				pattern: '[^\\s]+',
-			},
-		},
-		required: ['text'],
 	},
 	required: ['noteId', 'text', 'cw'],
 } as const;
 
 @Injectable()
-export default class extends Endpoint<typeof meta, typeof paramDef> {
+export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
 
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
-
-		@Inject(DI.pollsRepository)
-		private pollsRepository: PollsRepository,
 
 		private getterService: GetterService,
 		private noteEditService: NoteEditService,
@@ -144,7 +108,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				throw err;
 			});
 
-			if (!await this.roleService.isModerator(me)) {
+			const canOverrideAuthor = await this.roleService.isModerator(me);
+			if (canOverrideAuthor && note.userHost !== null) {
+				throw new ApiError(meta.errors.accessDenied);
+			}
+			if (!canOverrideAuthor) {
 				if (note.userId !== me.id) {
 					throw new ApiError(meta.errors.accessDenied);
 				} else if ((await this.roleService.getUserPolicies(me.id)).canEditNote !== true) {
@@ -152,22 +120,37 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				}
 			}
 
+			const unorderedCurrentFiles = await this.driveFilesRepository.findBy({ id: In(note.fileIds) });
+			const currentFiles = note.fileIds.flatMap(id => {
+				const file = unorderedCurrentFiles.find(candidate => candidate.id === id);
+				return file == null ? [] : [file];
+			});
+
+			let files = currentFiles;
+			if (ps.fileIds !== undefined) {
+				const requestedFiles = await this.driveFilesRepository.findBy({
+					id: In(ps.fileIds),
+					userId: note.userId,
+				});
+				if (requestedFiles.length !== ps.fileIds.length) {
+					throw new ApiError(meta.errors.noSuchFile);
+				}
+				files = ps.fileIds.flatMap(id => {
+					const file = requestedFiles.find(candidate => candidate.id === id);
+					return file == null ? [] : [file];
+				});
+			}
+
 			const newEditData = {
 				text: ps.text,
 				cw: ps.cw,
-				files: ps.fileIds ? await this.driveFilesRepository.findBy({ id: In(ps.fileIds) }) : undefined,
-				poll: ps.poll ? {
-					choices: ps.poll.choices,
-					multiple: ps.poll.multiple ?? false,
-					expiresAt: ps.poll.expiresAt ? new Date(ps.poll.expiresAt) : null,
-				} : undefined,
+				files,
 			};
 
 			const currentData = {
 				text: note.text,
 				cw: note.cw,
-				files: await this.driveFilesRepository.findBy({ id: In(note.fileIds) }),
-				poll: note.hasPoll ? await this.pollsRepository.findOneByOrFail({ noteId: note.id }) : undefined,
+				files: currentFiles,
 			};
 
 			if (isEqual(newEditData, currentData)) {
@@ -181,10 +164,17 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 					newEditData,
 					undefined,
 					me,
+					{
+						skipRolePolicyCheck: canOverrideAuthor,
+						allowAuthorOverride: canOverrideAuthor,
+					},
 				);
 			} catch (e) {
 				if (e instanceof NoteEditService.ContainsProhibitedWordsError) {
 					throw new ApiError(meta.errors.containsProhibitedWords);
+				}
+				if (e instanceof NoteEditService.InvalidNoteContentError) {
+					throw new ApiError(meta.errors.invalidNoteContent);
 				}
 				throw e;
 			}

@@ -3,17 +3,39 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { FORCE_RE_RENDER, FORCE_REMOUNT } from '@storybook/core-events';
-import { addons } from '@storybook/preview-api';
 import { type Preview, setup } from '@storybook/vue3';
 import isChromatic from 'chromatic/isChromatic';
-import { initialize, mswLoader } from 'msw-storybook-addon';
+import { setupWorker } from 'msw/browser';
+import { mswLoader } from 'msw-storybook-addon/csf3';
+import { FORCE_RE_RENDER, FORCE_REMOUNT } from 'storybook/internal/core-events';
+import { addons } from 'storybook/preview-api';
 import { userDetailed } from './fakes.js';
 import { commonHandlers, onUnhandledRequest } from './mocks.js';
 import themes from './themes.js';
 import '../src/style.scss';
 
 const appInitialized = Symbol();
+const misskeyThemeKeys = [
+	'l-light',
+	'l-coffee',
+	'l-apricot',
+	'l-rainy',
+	'l-botanical',
+	'l-vivid',
+	'l-cherry',
+	'l-sushi',
+	'l-u0',
+	'd-dark',
+	'd-persimmon',
+	'd-astro',
+	'd-future',
+	'd-botanical',
+	'd-green-lime',
+	'd-green-orange',
+	'd-cherry',
+	'd-ice',
+	'd-u0',
+] as const;
 
 let lastStory: string | null = null;
 let moduleInitialized = false;
@@ -56,9 +78,22 @@ function initLocalStorage() {
 	}));
 }
 
-initialize({
-	onUnhandledRequest,
-});
+function applyThemeGlobal(theme: unknown): void {
+	if (typeof theme === 'string' && Object.hasOwn(themes, theme)) {
+		document.documentElement.dataset.misskeyTheme = theme;
+	} else {
+		delete document.documentElement.dataset.misskeyTheme;
+	}
+}
+
+async function setupMswWorker() {
+	const worker = setupWorker(...commonHandlers);
+	await worker.start({
+		onUnhandledRequest,
+	});
+	return worker;
+}
+
 initLocalStorage();
 queueMicrotask(() => {
 	Promise.all([
@@ -88,8 +123,27 @@ queueMicrotask(() => {
 });
 
 const preview = {
+	initialGlobals: {
+		misskeyTheme: '',
+	},
+	globalTypes: {
+		misskeyTheme: {
+			name: 'Misskey theme',
+			description: 'Active Misskey theme',
+			toolbar: {
+				icon: 'mirror',
+				items: [
+					{ type: 'reset', title: '(clear)' },
+					...misskeyThemeKeys,
+				],
+				dynamicTitle: true,
+			},
+		},
+	},
+	tags: ['autodocs'],
 	decorators: [
 		(Story, context) => {
+			applyThemeGlobal(context.globals.misskeyTheme);
 			if (lastStory === context.id) {
 				lastStory = null;
 			} else {
@@ -97,13 +151,13 @@ const preview = {
 				const channel = addons.getChannel();
 				const resetIndexedDBPromise = globalThis.indexedDB?.databases
 					? indexedDB.databases().then((r) => {
-							for (var i = 0; i < r.length; i++) {
+							for (let i = 0; i < r.length; i++) {
 								indexedDB.deleteDatabase(r[i].name!);
 							}
 						}).catch(() => {})
 					: Promise.resolve();
 				const resetDefaultStorePromise = import('../src/store').then(({ store }) => {
-					// @ts-expect-error
+					// @ts-expect-error The Storybook reset intentionally reinitializes the singleton store.
 					store.init();
 				}).catch(() => {});
 				Promise.all([resetIndexedDBPromise, resetDefaultStorePromise]).then(() => {
@@ -134,13 +188,10 @@ const preview = {
 			};
 		},
 	],
-	loaders: [mswLoader],
+	loaders: [mswLoader(setupMswWorker)],
 	parameters: {
 		controls: {
 			exclude: /^__/,
-		},
-		msw: {
-			handlers: commonHandlers,
 		},
 	},
 } satisfies Preview;

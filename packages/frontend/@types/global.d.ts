@@ -12,10 +12,7 @@ declare const _DEV_: boolean;
 declare const _PERF_PREFIX_: string;
 declare const _RUFFLE_VERSION_: string;
 
+declare module '@ruffle-rs/ruffle';
+
 // for dev-mode
 declare const _LANGS_FULL_: string[][];
-
-// TagCanvas
-interface Window {
-	TagCanvas: any;
-}

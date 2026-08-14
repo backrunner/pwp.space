@@ -67,6 +67,7 @@ export interface IPaginator<T = unknown, _T = T & MisskeyEntity> {
 	releaseQueue(): void;
 	removeItem(id: string): void;
 	updateItem(id: string, updater: (item: _T) => _T): void;
+	updateItems(updater: (item: _T) => _T): void;
 }
 
 export class Paginator<
@@ -175,6 +176,7 @@ export class Paginator<
 		this.releaseQueue = this.releaseQueue.bind(this);
 		this.removeItem = this.removeItem.bind(this);
 		this.updateItem = this.updateItem.bind(this);
+		this.updateItems = this.updateItems.bind(this);
 	}
 
 	private getNewestId(): string | null | undefined {
@@ -423,5 +425,26 @@ export class Paginator<
 			this.items.value[index] = updater(item);
 			if (this.useShallowRef) triggerRef(this.items);
 		}
+	}
+
+	public updateItems(updater: (item: T) => T): void {
+		let itemsUpdated = false;
+
+		for (let i = 0; i < this.items.value.length; i++) {
+			const item = this.items.value[i]!;
+			const updatedItem = updater(item);
+			if (updatedItem === item) continue;
+			this.items.value[i] = updatedItem;
+			itemsUpdated = true;
+		}
+
+		for (let i = 0; i < this.aheadQueue.length; i++) {
+			const item = this.aheadQueue[i]!;
+			const updatedItem = updater(item);
+			if (updatedItem === item) continue;
+			this.aheadQueue[i] = updatedItem;
+		}
+
+		if (itemsUpdated && this.useShallowRef) triggerRef(this.items);
 	}
 }

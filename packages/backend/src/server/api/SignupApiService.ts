@@ -117,7 +117,7 @@ export class SignupApiService {
 		const password = body['password'];
 		const host: string | null = process.env.NODE_ENV === 'test' ? (body['host'] ?? null) : null;
 		const invitationCode = body['invitationCode'];
-		const reason = body['reason'];
+		let reason: string | undefined;
 		const emailAddress = body['emailAddress'];
 
 		if (this.meta.emailRequiredForSignup) {
@@ -134,7 +134,13 @@ export class SignupApiService {
 		}
 
 		if (this.meta.approvalRequiredForSignup) {
-			if (reason == null || typeof reason !== 'string') {
+			const rawReason = body['reason'];
+			if (typeof rawReason !== 'string') {
+				reply.code(400);
+				return;
+			}
+			reason = rawReason.trim();
+			if (reason.length === 0 || reason.length > 1000) {
 				reply.code(400);
 				return;
 			}

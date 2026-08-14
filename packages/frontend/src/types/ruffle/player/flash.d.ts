@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /**
  * These are properties and methods that Flash added to its `<embed>/<object>` tags.
  * These don't seem to be documented in full anywhere, and Ruffle adds them as we encounter some.

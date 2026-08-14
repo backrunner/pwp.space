@@ -869,6 +869,15 @@ export type paths = {
          */
         post: operations['admin___system-webhook___update'];
     };
+    '/admin/unset-mfa': {
+        /**
+         * admin/unset-mfa
+         * @description No description provided.
+         *
+         *     **Credential required**: *Yes* / **Permission**: *write:admin:unset-mfa*
+         */
+        post: operations['admin___unset-mfa'];
+    };
     '/admin/unset-user-avatar': {
         /**
          * admin/unset-user-avatar
@@ -1787,6 +1796,15 @@ export type paths = {
          *     **Credential required**: *Yes* / **Permission**: *read:drive*
          */
         post: operations['drive___files___find-by-hash'];
+    };
+    '/drive/files/get-proxy-url': {
+        /**
+         * drive/files/get-proxy-url
+         * @description Get a same-origin media proxy URL for a drive file.
+         *
+         *     **Credential required**: *Yes* / **Permission**: *read:drive*
+         */
+        post: operations['drive___files___get-proxy-url'];
     };
     '/drive/files/move-bulk': {
         /**
@@ -4380,6 +4398,7 @@ export type components = {
             securityKeys: boolean;
             email?: string | null;
             emailVerified?: boolean | null;
+            signupReason?: string | null;
             securityKeysList?: {
                 /**
                  * Format: id
@@ -9600,6 +9619,10 @@ export interface operations {
                         sensitiveMediaDetectionSensitivity: 'medium' | 'low' | 'high' | 'veryLow' | 'veryHigh';
                         setSensitiveFlagAutomatically: boolean;
                         enableSensitiveMediaDetectionForVideos: boolean;
+                        sensitiveMediaDetectionApiUrl: string | null;
+                        sensitiveMediaDetectionApiKey: string | null;
+                        sensitiveMediaDetectionTimeout: number;
+                        sensitiveMediaDetectionMaxImagesPerRequest: number;
                         /** Format: id */
                         proxyAccountId: string;
                         email: string | null;
@@ -9677,6 +9700,7 @@ export interface operations {
                         urlPreviewRequireContentLength: boolean;
                         urlPreviewUserAgent: string | null;
                         urlPreviewSummaryProxyUrl: string | null;
+                        urlPreviewSensitiveList: string[];
                         /** @enum {string} */
                         federation: 'all' | 'specified' | 'none';
                         federationHosts: string[];
@@ -11955,6 +11979,8 @@ export interface operations {
                     'application/json': {
                         email: string | null;
                         emailVerified: boolean;
+                        approved: boolean;
+                        signupReason: string | null;
                         followedMessage: string | null;
                         autoAcceptFollowed: boolean;
                         noCrawle: boolean;
@@ -12196,10 +12222,11 @@ export interface operations {
                     /** @enum {string} */
                     sort?: '+follower' | '-follower' | '+createdAt' | '-createdAt' | '+updatedAt' | '-updatedAt' | '+lastActiveDate' | '-lastActiveDate';
                     /**
+                     * @description `approved` is a deprecated alias for `pendingApproval`.
                      * @default all
                      * @enum {string}
                      */
-                    state?: 'all' | 'alive' | 'available' | 'admin' | 'moderator' | 'adminOrModerator' | 'suspended' | 'approved';
+                    state?: 'all' | 'alive' | 'available' | 'admin' | 'moderator' | 'adminOrModerator' | 'suspended' | 'pendingApproval' | 'approved';
                     /**
                      * @default combined
                      * @enum {string}
@@ -12750,6 +12777,69 @@ export interface operations {
             };
         };
     };
+    'admin___unset-mfa': {
+        requestBody: {
+            content: {
+                'application/json': {
+                    /** Format: misskey:id */
+                    userId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK (without any results) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+            };
+            /** @description Client error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Authentication error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Forbidden error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description I'm Ai */
+            418: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+        };
+    };
     'admin___unset-user-avatar': {
         requestBody: {
             content: {
@@ -13061,6 +13151,10 @@ export interface operations {
                     sensitiveMediaDetectionSensitivity?: 'medium' | 'low' | 'high' | 'veryLow' | 'veryHigh';
                     setSensitiveFlagAutomatically?: boolean;
                     enableSensitiveMediaDetectionForVideos?: boolean;
+                    sensitiveMediaDetectionApiUrl?: string | null;
+                    sensitiveMediaDetectionApiKey?: string | null;
+                    sensitiveMediaDetectionTimeout?: number;
+                    sensitiveMediaDetectionMaxImagesPerRequest?: number;
                     maintainerName?: string | null;
                     maintainerEmail?: string | null;
                     langs?: string[];
@@ -13130,6 +13224,7 @@ export interface operations {
                     urlPreviewRequireContentLength?: boolean;
                     urlPreviewUserAgent?: string | null;
                     urlPreviewSummaryProxyUrl?: string | null;
+                    urlPreviewSensitiveList?: string[] | null;
                     /** @enum {string} */
                     federation?: 'all' | 'none' | 'specified';
                     federationHosts?: string[];
@@ -20075,6 +20170,83 @@ export interface operations {
             };
         };
     };
+    'drive___files___get-proxy-url': {
+        requestBody: {
+            content: {
+                'application/json': {
+                    /** Format: misskey:id */
+                    fileId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK (with results) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        url: string;
+                    };
+                };
+            };
+            /** @description Client error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Authentication error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Forbidden error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description I'm Ai */
+            418: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+        };
+    };
     'drive___files___move-bulk': {
         requestBody: {
             content: {
@@ -21924,6 +22096,15 @@ export interface operations {
             };
             /** @description I'm Ai */
             418: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Too many requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31549,6 +31730,8 @@ export interface operations {
                 content: {
                     'application/json': {
                         id: string;
+                        /** Format: date-time */
+                        updatedAt: string | null;
                         reactions: {
                             [key: string]: number;
                         };
@@ -32050,12 +32233,6 @@ export interface operations {
                     text: string | null;
                     cw: string | null;
                     fileIds?: string[];
-                    poll?: {
-                        choices: string[];
-                        multiple?: boolean;
-                        expiresAt?: number | null;
-                        expiredAfter?: number | null;
-                    } | null;
                 };
             };
         };
@@ -34494,6 +34671,7 @@ export interface operations {
                         originalNotesCount: number;
                         usersCount: number;
                         originalUsersCount: number;
+                        reactionsCount: number;
                         instances: number;
                         driveUsageLocal: number;
                         driveUsageRemote: number;

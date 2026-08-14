@@ -31,6 +31,14 @@ export const meta = {
 				type: 'boolean',
 				optional: false, nullable: false,
 			},
+			approved: {
+				type: 'boolean',
+				optional: false, nullable: false,
+			},
+			signupReason: {
+				type: 'string',
+				optional: false, nullable: true,
+			},
 			followedMessage: {
 				type: 'string',
 				optional: false, nullable: true,

@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -10,13 +10,13 @@ import { setImmediate } from 'node:timers/promises';
 import RE2 from 're2';
 import * as mfm from 'mfm-js';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { In } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiNoteHistory } from '@/models/NoteHistory.js';
-import type { ChannelsRepository, FollowingsRepository, InstancesRepository, NotesRepository, NoteHistoriesRepository, UserProfilesRepository, UsersRepository, PollsRepository, DriveFilesRepository } from '@/models/_.js';
+import type { ChannelsRepository, NotesRepository, UserProfilesRepository, UsersRepository, PollsRepository, DriveFilesRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import { concat } from '@/misc/prelude/array.js';
 import { IdService } from '@/core/IdService.js';
@@ -26,12 +26,7 @@ import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js
 import type { MiChannel } from '@/models/Channel.js';
 import { normalizeForSearch } from '@/misc/normalize-for-search.js';
 import { RelayService } from '@/core/RelayService.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
 import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import NotesChart from '@/core/chart/charts/notes.js';
-import PerUserNotesChart from '@/core/chart/charts/per-user-notes.js';
-import InstanceChart from '@/core/chart/charts/instance.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UserWebhookService } from '@/core/UserWebhookService.js';
@@ -40,7 +35,6 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
 import { bindThis } from '@/decorators.js';
 import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { RoleService } from '@/core/RoleService.js';
@@ -50,6 +44,7 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { cleanLink } from '@/misc/link-cleaner.js';
+import { trackPromise } from '@/misc/promise-tracker.js';
 
 const FAST_URL_TESTER = new RE2('https?:\\/\\/');
 
@@ -80,6 +75,7 @@ type Option = {
 
 type EditOptions = {
 	skipRolePolicyCheck?: boolean;
+	allowAuthorOverride?: boolean;
 };
 
 @Injectable()
@@ -87,10 +83,11 @@ export class NoteEditService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
 
 	public static ContainsProhibitedWordsError = class extends Error { };
+	public static InvalidNoteContentError = class extends Error { };
 
 	constructor(
-		@Inject(DI.config)
-		private config: Config,
+		@Inject(DI.db)
+		private db: DataSource,
 
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
@@ -98,17 +95,11 @@ export class NoteEditService implements OnApplicationShutdown {
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
 
-		@Inject(DI.instancesRepository)
-		private instancesRepository: InstancesRepository,
-
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
 
 		@Inject(DI.channelsRepository)
 		private channelsRepository: ChannelsRepository,
-
-		@Inject(DI.followingsRepository)
-		private followingsRepository: FollowingsRepository,
 
 		@Inject(DI.pollsRepository)
 		private pollsRepository: PollsRepository,
@@ -116,26 +107,18 @@ export class NoteEditService implements OnApplicationShutdown {
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
 
-		@Inject(DI.noteHistoriesRepository)
-		private noteHistoriesRepository: NoteHistoriesRepository,
-
 		private userEntityService: UserEntityService,
 		private noteEntityService: NoteEntityService,
 		private idService: IdService,
 		private globalEventService: GlobalEventService,
 		private queueService: QueueService,
 		private relayService: RelayService,
-		private federatedInstanceService: FederatedInstanceService,
-		private remoteUserResolveService: RemoteUserResolveService,
 		private apDeliverManagerService: ApDeliverManagerService,
 		private apRendererService: ApRendererService,
 		private roleService: RoleService,
 		private metaService: MetaService,
 		private searchService: SearchService,
-		private notesChart: NotesChart,
-		private perUserNotesChart: PerUserNotesChart,
 		private activeUsersChart: ActiveUsersChart,
-		private instanceChart: InstanceChart,
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private moderationLogService: ModerationLogService,
@@ -156,13 +139,21 @@ export class NoteEditService implements OnApplicationShutdown {
 		if (targetNote == null) {
 			throw new Error('No such note');
 		}
+		const requester = editor ?? user;
+		if (options?.allowAuthorOverride && targetNote.userHost !== null) {
+			throw new Error('Remote notes cannot be edited through a local author override');
+		}
+		if (targetNote.userId !== requester.id && !options?.allowAuthorOverride) {
+			throw new Error('The editor is not the note author');
+		}
 
 		if (!options?.skipRolePolicyCheck && (await this.roleService.getUserPolicies(user.id)).canEditNote !== true) {
 			throw new Error('Edit note is not allowed');
 		}
 
-		if (data.reply == null) data.reply = targetNote.reply;
-		if (data.channel == null) data.channel = targetNote.channel;
+		if (data.reply == null && targetNote.replyId) data.reply = await this.notesRepository.findOneByOrFail({ id: targetNote.replyId });
+		if (data.renote == null && targetNote.renoteId) data.renote = await this.notesRepository.findOneByOrFail({ id: targetNote.renoteId });
+		if (data.channel == null && targetNote.channelId) data.channel = await this.channelsRepository.findOneByOrFail({ id: targetNote.channelId });
 
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
@@ -180,31 +171,22 @@ export class NoteEditService implements OnApplicationShutdown {
 			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
 		}
 
-		if (data.renote == null && targetNote.renoteId) data.renote = await this.notesRepository.findOneByOrFail({ id: targetNote.renoteId });
-		if (data.reply == null && targetNote.replyId) data.reply = await this.notesRepository.findOneByOrFail({ id: targetNote.replyId });
-		if (data.poll == null) data.poll = targetNote.hasPoll ? await this.pollsRepository.findOneByOrFail({ noteId: targetId }) : null;
-		if (data.files == null) data.files = await this.driveFilesRepository.findBy({ id: In(targetNote.fileIds) });
+		// Poll editing is intentionally unsupported. Keeping the stored poll also
+		// preserves votes and the original end-notification job.
+		data.poll = targetNote.hasPoll ? await this.pollsRepository.findOneByOrFail({ noteId: targetId }) : null;
+		if (data.files === undefined) {
+			const unorderedFiles = await this.driveFilesRepository.findBy({ id: In(targetNote.fileIds) });
+			data.files = targetNote.fileIds.flatMap(id => {
+				const file = unorderedFiles.find(candidate => candidate.id === id);
+				return file == null ? [] : [file];
+			});
+		}
 		if (data.name == null) data.name = targetNote.name;
 		if (data.reactionAcceptance == null) data.reactionAcceptance = targetNote.reactionAcceptance;
 		const meta = await this.metaService.fetch();
 
 		if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', meta.prohibitedWords)) {
 			throw new NoteEditService.ContainsProhibitedWordsError();
-		}
-
-		let changeVisibilityToHome = false;
-
-		const inSilencedInstance = this.utilityService.isSilencedHost(meta.silencedHosts, user.host);
-
-		if (targetNote.visibility === 'public' && data.channel == null) {
-			const sensitiveWords = meta.sensitiveWords;
-			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
-				changeVisibilityToHome = true;
-			} else if ((await this.roleService.getUserPolicies(user.id)).canPublicNote === false) {
-				changeVisibilityToHome = true;
-			}
-		} else if (inSilencedInstance) {
-			changeVisibilityToHome = true;
 		}
 
 		// Check blocking
@@ -223,12 +205,16 @@ export class NoteEditService implements OnApplicationShutdown {
 			if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
 				data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
 			}
-			data.text = data.text.trim();
-			if (FAST_URL_TESTER.test(data.text)) {
+			data.text = data.text.trim() || null;
+			if (data.text && FAST_URL_TESTER.test(data.text)) {
 				data.text = await cleanLink(data.text);
 			}
 		} else {
 			data.text = null;
+		}
+
+		if (data.text == null && (data.files?.length ?? 0) === 0 && data.poll == null && data.renote == null) {
+			throw new NoteEditService.InvalidNoteContentError();
 		}
 
 		let tags = data.apHashtags;
@@ -261,7 +247,7 @@ export class NoteEditService implements OnApplicationShutdown {
 		const note = new MiNote({
 			id: targetNote.id,
 			updatedAt: data.publishedAt ?? new Date(),
-			visibility: changeVisibilityToHome ? 'home' : targetNote.visibility,
+			visibility: targetNote.visibility,
 			fileIds: data.files ? data.files.map(file => file.id) : [],
 			replyId: data.reply ? data.reply.id : null,
 			renoteId: data.renote ? data.renote.id : null,
@@ -292,8 +278,9 @@ export class NoteEditService implements OnApplicationShutdown {
 		if (data.url != null) note.url = data.url;
 
 		// Append mentions data
-		if (mentionedUsers.length > 0) {
-			note.mentions = mentionedUsers.map(u => u.id);
+		note.mentions = mentionedUsers.map(u => u.id);
+		note.mentionedRemoteUsers = '[]';
+		if (note.mentions.length > 0) {
 			const profiles = await this.userProfilesRepository.findBy({ userId: In(note.mentions) });
 			note.mentionedRemoteUsers = JSON.stringify(mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u)).map(u => {
 				const profile = profiles.find(p => p.userId === u.id);
@@ -307,9 +294,36 @@ export class NoteEditService implements OnApplicationShutdown {
 			}));
 		}
 
-		// 投稿を作成
+		let savedNote: MiNote;
+		let beforeNote: MiNote;
 		try {
-			await this.notesRepository.update({ id: note.id }, note);
+			({ savedNote, beforeNote } = await this.db.transaction(async transactionalEntityManager => {
+				const lockedNote = await transactionalEntityManager.findOneOrFail(MiNote, {
+					where: { id: note.id },
+					lock: { mode: 'pessimistic_write' },
+				});
+				const history = new MiNoteHistory({
+					id: this.idService.gen(),
+					text: lockedNote.text,
+					name: lockedNote.name,
+					cw: lockedNote.cw,
+					targetId: lockedNote.id,
+					fileIds: lockedNote.fileIds,
+					attachedFileTypes: lockedNote.attachedFileTypes,
+					mentions: lockedNote.mentions,
+					mentionedRemoteUsers: lockedNote.mentionedRemoteUsers,
+					emojis: lockedNote.emojis,
+					tags: lockedNote.tags,
+					hasPoll: lockedNote.hasPoll,
+				});
+
+				await transactionalEntityManager.update(MiNote, { id: note.id }, note);
+				await transactionalEntityManager.insert(MiNoteHistory, history);
+				return {
+					beforeNote: lockedNote,
+					savedNote: await transactionalEntityManager.findOneByOrFail(MiNote, { id: note.id }),
+				};
+			}));
 		} catch (e) {
 			// duplicate key error
 			if (isDuplicateKeyValueError(e)) {
@@ -322,35 +336,22 @@ export class NoteEditService implements OnApplicationShutdown {
 
 			throw e;
 		}
-		this.noteHistoriesRepository.insert(new MiNoteHistory({
-			id: this.idService.gen(),
-			text: targetNote.text,
-			cw: targetNote.cw,
-			targetId: targetNote.id,
-			fileIds: targetNote.fileIds,
-			attachedFileTypes: targetNote.attachedFileTypes,
-			mentions: targetNote.mentions,
-			mentionedRemoteUsers: targetNote.mentionedRemoteUsers,
-			emojis: targetNote.emojis,
-			tags: targetNote.tags,
-			hasPoll: targetNote.hasPoll,
-		}));
-		setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
-			async () => this.postNoteEdited((await this.notesRepository.findOneByOrFail({ id: note.id })), user, data, silent, tags!, mentionedUsers!),
+		trackPromise(setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
+			() => this.postNoteEdited(savedNote, user, data, silent, tags!, mentionedUsers!),
 			() => { /* aborted, ignore this */ },
-		);
-		if (editor && (note.userId !== editor.id)) {
-			const user = await this.usersRepository.findOneByOrFail({ id: note.userId });
-			this.moderationLogService.log(editor, 'editNote', {
-				noteId: note.id,
-				noteUserId: note.userId,
+		));
+		if (editor && (savedNote.userId !== editor.id)) {
+			const user = await this.usersRepository.findOneByOrFail({ id: savedNote.userId });
+			await this.moderationLogService.log(editor, 'editNote', {
+				noteId: savedNote.id,
+				noteUserId: savedNote.userId,
 				noteUserUsername: user.username,
 				noteUserHost: user.host,
-				note: note,
-				beforeNote: targetNote,
+				note: savedNote,
+				beforeNote,
 			});
 		}
-		return note;
+		return savedNote;
 	}
 
 	@bindThis
@@ -360,45 +361,17 @@ export class NoteEditService implements OnApplicationShutdown {
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
 	}, data: Option, silent: boolean, tags: string[], mentionedUsers: MinimumUser[]) {
-		const meta = await this.metaService.fetch();
-
-		this.notesChart.update(note, true);
-		if (meta.enableChartsForRemoteUser || (user.host == null)) {
-			this.perUserNotesChart.update(user, note, true);
-		}
-
-		// Register host
-		if (this.userEntityService.isRemoteUser(user)) {
-			this.federatedInstanceService.fetch(user.host).then(async i => {
-				if (i) {
-					this.instancesRepository.increment({ id: i.id }, 'notesCount', 1);
-					if ((await this.metaService.fetch()).enableChartsForFederatedInstances) {
-						this.instanceChart.updateNote(i.host, note, true);
-					}
-				}
-			});
-		}
-
-		if (data.poll && data.poll.expiresAt) {
-			const delay = data.poll.expiresAt.getTime() - Date.now();
-			this.queueService.endedPollNotificationQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
-		}
-
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
 
-			// Pack the note
-			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
-
-			// Publish edited event to notify clients
+			// Publish before optional webhook/AP work so subscribed clients can refresh promptly.
 			this.globalEventService.publishNoteStream(note, 'edited', {
 				note,
 			});
+			this.globalEventService.publishMainStream(note.userId, 'noteUpdated', note.id);
+
+			// Pack the note
+			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
 			this.userWebhookService.getActiveWebhooks().then(webhooks => {
 				webhooks = webhooks.filter(x => x.userId === user.id && x.on.includes('note'));
@@ -410,8 +383,8 @@ export class NoteEditService implements OnApplicationShutdown {
 			});
 
 			//#region AP deliver
-			if (this.userEntityService.isLocalUser(user)) {
-				(async () => {
+			if (this.userEntityService.isLocalUser(user) && !note.localOnly) {
+				trackPromise((async () => {
 					const noteActivity = await this.renderNoteOrRenoteActivity(data, note, user.id);
 					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
 
@@ -438,23 +411,20 @@ export class NoteEditService implements OnApplicationShutdown {
 					}
 
 					if (['public'].includes(note.visibility)) {
-						this.relayService.deliverToRelays(user, noteActivity);
+						await Promise.all([
+							this.relayService.deliverToRelays(user, noteActivity),
+							dm.execute(),
+						]);
+					} else {
+						await dm.execute();
 					}
-
-					dm.execute();
-				})();
+				})());
 			}
 			//#endregion
 		}
 
-		if (data.channel) {
-			this.channelsRepository.update(data.channel.id, {
-				lastNotedAt: new Date(),
-			});
-		}
-
 		// Register to search database
-		this.index(note);
+		await this.index(note);
 	}
 
 	@bindThis
@@ -465,10 +435,11 @@ export class NoteEditService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private index(note: MiNote) {
+	private async index(note: MiNote): Promise<void> {
+		await this.searchService.unindexNote(note);
 		if (note.text == null && note.cw == null) return;
 
-		this.searchService.indexNote(note);
+		await this.searchService.indexNote(note);
 	}
 
 	@bindThis

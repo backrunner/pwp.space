@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/preferences" :label="i18n.ts.preferences" :keywords="['general', 'preferences']" icon="ti ti-adjustments">
 	<div class="_gaps_m">
-		<MkFeatureBanner icon="/client-assets/gear_3d.png" color="#00ff9d">
+		<MkFeatureBanner icon="/fluent-emoji/2699.png" color="#00ff9d">
 			<SearchText>{{ i18n.ts._settings.preferencesBanner }}</SearchText>
 		</MkFeatureBanner>
 
@@ -491,7 +491,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #icon><SearchIcon><i class="ti ti-accessible"></i></SearchIcon></template>
 
 					<div class="_gaps_m">
-						<MkFeatureBanner icon="/client-assets/mens_room_3d.png" color="#0011ff">
+						<MkFeatureBanner icon="/fluent-emoji/1f6b9.png" color="#0011ff">
 							<SearchText>{{ i18n.ts._settings.accessibilityBanner }}</SearchText>
 						</MkFeatureBanner>
 
@@ -795,6 +795,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 										{ label: i18n.ts._serverDisconnectedBehavior.reload, value: 'reload' },
 										{ label: i18n.ts._serverDisconnectedBehavior.dialog, value: 'dialog' },
 										{ label: i18n.ts._serverDisconnectedBehavior.quiet, value: 'quiet' },
+										{ label: i18n.ts._serverDisconnectedBehavior.silent, value: 'silent' },
 									]"
 								>
 									<template #label><SearchLabel>{{ i18n.ts.whenServerDisconnected }}</SearchLabel></template>

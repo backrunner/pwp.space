@@ -15,7 +15,6 @@ import { prefer } from '@/preferences.js';
 import { $i } from '@/i.js';
 import { instance } from '@/instance.js';
 import { globalEvents } from '@/events.js';
-import { getProxiedImageUrl } from '@/utility/media-proxy.js';
 import { genId } from '@/utility/id.js';
 
 type UploadReturnType = {
@@ -268,8 +267,11 @@ export async function selectFile<
 export async function createCroppedImageDriveFileFromImageDriveFile(imageDriveFile: Misskey.entities.DriveFile, options: {
 	aspectRatio: number | null;
 }): Promise<Misskey.entities.DriveFile> {
+	const { url: imgUrl } = await misskeyApi('drive/files/get-proxy-url', {
+		fileId: imageDriveFile.id,
+	});
+
 	return new Promise((resolve, reject) => {
-		const imgUrl = getProxiedImageUrl(imageDriveFile.url, undefined, true);
 		const image = new Image();
 		image.src = imgUrl;
 		image.onload = () => {

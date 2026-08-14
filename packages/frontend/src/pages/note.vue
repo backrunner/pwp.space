@@ -76,6 +76,8 @@ const note = ref<null | Misskey.entities.Note>(CTX_NOTE);
 const clips = ref<Misskey.entities.Clip[]>();
 const showPrev = ref<'user' | 'channel' | false>(false);
 const showNext = ref<'user' | 'channel' | false>(false);
+const noteTabs = ['reactions', 'replies', 'renotes', 'histories'] as const;
+const initialTab = computed<typeof noteTabs[number] | undefined>(() => noteTabs.find(tab => tab === props.initialTab));
 const error = ref();
 
 const prevUserPaginator = markRaw(new Paginator('users/notes', {

@@ -83,7 +83,7 @@ misskeyApi('admin/abuse-user-reports', {
 });
 
 misskeyApi('admin/show-users', {
-	state: 'approved',
+	state: 'pendingApproval',
 	origin: 'local',
 	limit: 1,
 }).then(approvals => {

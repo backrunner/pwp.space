@@ -52,7 +52,7 @@ export class FileServerProxyHandler {
 		const mustOrigin = 'origin' in request.query;
 
 		if (this.config.externalMediaProxyEnabled && !mustOrigin) {
-			return await this.redirectToExternalProxy(request, reply);
+			return await this.redirectToExternalProxy(request, reply, url);
 		}
 
 		this.validateUserAgent(request);
@@ -110,6 +110,7 @@ export class FileServerProxyHandler {
 	private async redirectToExternalProxy(
 		request: FastifyRequest<{ Params: { url: string }; Querystring: ProxyQuery }>,
 		reply: FastifyReply,
+		targetUrl: string,
 	) {
 		reply.header('Cache-Control', 'public, max-age=259200'); // 3 days
 
@@ -120,7 +121,7 @@ export class FileServerProxyHandler {
 		}
 
 		if (this.config.mediaProxyKey) {
-			url.searchParams.set('sign', getProxySign(request.params.url, this.config.mediaProxyKey, this.config.url));
+			url.searchParams.set('sign', getProxySign(targetUrl, this.config.mediaProxyKey, this.config.url));
 		}
 
 		return reply.redirect(url.toString(), 301);

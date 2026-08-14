@@ -1,3 +1,91 @@
+## Unreleased
+
+### General
+- Feat: アカウント登録を管理者承認制にできるように
+- Feat: 管理者がアカウントを完全に削除できるように
+
+### Client
+- Feat: ノートの編集と編集履歴の表示に対応
+- Feat: RuffleによるFlashコンテンツの再生と数式表示に対応
+- Enhance: ノートの下書きを端末間で引き継げるように
+- Enhance: テキスト入力欄の高さを入力内容に合わせて自動調整するように
+- Enhance: サーバー切断時に警告を表示しない設定を追加
+
+### Server
+- Enhance: 外部メディアプロキシURLの署名に対応
+- Enhance: ノートの作成・編集時にURLのトラッキングパラメーターを除去するように
+
+## 2026.7.0
+
+### Note
+
+**今回のリリースではMisskeyの各種動作要件が変更されます。必ずアップグレード前にお使いの環境をご確認ください。**
+
+- センシティブメディアの判定 (NSFW検出) が、本体に内蔵された nsfwjs による推論から、外部サービス [sensitive-detector](https://github.com/misskey-dev/sensitive-detector) への HTTP 呼び出し方式に変更されました。
+	- これに伴い、本体から `nsfwjs` / `@tensorflow/tfjs` / `@tensorflow/tfjs-node` および同梱の NSFW 判定モデルが削除され、インストール要件 (ネイティブ ML スタック) が緩和されました。
+	- **センシティブ判定機能を利用しているサーバーは対応が必要です。** 別途 [sensitive-detector](https://github.com/misskey-dev/sensitive-detector) サービスを立ち上げ、コントロールパネルの「モデレーション > センシティブなメディアの検出」で接続先 URL を設定してください。接続先が未設定の場合、センシティブ判定は行われません (すべて非センシティブ扱い)。
+	- 画像の正規化・動画フレームの抽出・しきい値判定・集約は引き続き本体側で行われ、外部サービスには正規化済み画像の推論のみを委譲します。
+- Node.js v24, v26 をサポートしました。**Node.js v22 でも動作しますが、今後のリリースで v22 のサポートを終了する予定**ですので、Node.js のアップデートをご検討ください。
+  - Node.js のセキュリティアップデートに伴い、最低動作バージョンを 22.22.2 / 24.17.0 / 26.4.0 に引き上げました。
+  - Docker Image は Node.js 26.4.0-trixie に更新されています。
+- バックエンドで画像処理に用いているライブラリ sharp のシステム要件の変更により、**SSE4.2 命令セットをサポートしていない x86_64 CPU では Misskey が正しく動作しなくなります**。仮想マシンに Misskey をデプロイしている場合や、古いハードウェアをお使いの場合は、アップデート前にお使いの環境をご確認ください。なお、ARM64 など x86_64 ではない環境においてはこの変更による影響はありません。
+- YAMLパーサーをアップデートし、より厳格なチェックが行われるようになりました。起動時にconfigの読み取りで構文エラーが発生する可能性があります。\
+  例えば `allowPrivateNetworks` を 2026.6.0 までの `example.yml` の構文を元に記述している場合は、配列の閉じ括弧のインデントを上げるか、リスト表示に書き換える必要があります。詳しくは https://github.com/misskey-dev/misskey/pull/17701 をご覧ください。
+
+### General
+- Feat: コントロールパネルから二要素認証を解除できるように
+- Feat: 条件に一致したURLプレビューのサムネイルを隠すことができるように  
+  (Based on https://github.com/MisskeyIO/misskey/pull/214)
+- Enhance: 依存関係の更新
+
+### Client
+- 2025.4.0 以前の設定情報の移行処理が削除されました
+	- 2025.4.0 から直接 2026.6.0 以上にアップデートする場合は設定が移行されませんので注意してください。移行したい場合は一度 2026.5.1 を経由してください。
+- Enhance: 画像ビューワーを刷新・動画プレイヤーを統合
+  - 操作性の改善
+  - ビューワーとMisskeyの各種機能との統合を強化
+  - パフォーマンスの向上
+  - Enhance: マウスホイールで拡大縮小できるように
+  - Fix: 幅が狭い画面で動画の再生が困難な問題を修正
+  - Fix: 一部の画像のみセンシティブなとき、ビューワー内で画像を切り替えるとセンシティブな画像がそのまま表示される問題を修正
+  - Fix: 一部の画像をビューワーで読み込んだ際に正しく表示されない問題を修正
+- Enhance: ファイルアップロード前にプレビューできるように
+- Enhance: タブがバックグラウンドの間は必要ない定期更新処理を停止するように
+- Enhance: 翻訳の更新
+- Fix: 「画像を新しいタブで開く」が機能しなくなっていた問題を修正
+- Fix: デバイスタイプをスマートフォンに固定している状態で画面幅が広いとき、画面左上のアイコンが表示されない問題を修正
+- Fix: チャットでIMEの変換を確定するEnterでメッセージが送信されてしまうことがある問題を修正
+- Fix: 自分へのメンションに対する色分けで、判定が大文字/小文字を区別していた問題を修正
+- Fix: いくつかのイベントリスナーが正しく解除されない問題を修正（メモリ使用量の改善）
+- Fix: 非ログイン時トップページをスクロール操作できないことがある問題を修正
+- Fix: ローカルユーザーへのホスト付きメンションが本文に含まれる指名ノートの作成時、投稿フォームにて、当該ユーザーが宛先に含まれていても正しく認識されない問題を修正
+- Fix: チャートの描画終了後にリソースが解放されない問題を修正
+- Fix: ドライブの「このファイルからノートを作成」やギャラリーの「ノートで共有」、誕生日ウィジェットからのノート作成において、通常投稿の下書きが表示される問題を修正
+- Fix: QRコードリーダーがページを離れても停止しない問題を修正
+- Fix: ノートの詳細表示で削除された引用元が表示されない問題を修正
+
+### Server
+- Feat: ログ基盤の刷新
+  - API内部エラーのログに構造化属性と正規化したエラー情報を付与し、認証情報を自動的に秘匿するように（従来形式の表示は維持）
+  - ログ全体の既定出力レベルとドメインごとの出力レベルを設定できるように
+  - バックエンドのログを1行JSON形式で出力できるように
+  - SentryのTrace ContextをJSON形式のログへ関連付けられるように
+  - HTTPのAccess logをstatus class単位で出力できるように（開発時のリクエスト・レスポンス本文、SentryのTrace Contextにも対応）
+- Enhance: Sentry バックエンドの自動計装を `sentryForBackend.disabledIntegrations` で個別に無効化できるように
+- Enhance: センシティブメディアの判定を外部サービス ([sensitive-detector](https://github.com/misskey-dev/sensitive-detector)) に分離し、`nsfwjs` / `@tensorflow/tfjs(-node)` の同梱と NSFW 判定モデルを廃止 (#16804)
+- Enhance: Node.js 22.22.2以降、24.17.0以降、26.4.0以降をサポートするように
+- Enhance: Docker Image の Node.js を 26.4.0 に、Debian を trixie (v13) に更新
+- Enhance: URLプレビューの結果を内部でキャッシュするように
+- Fix: `/stats` API のレスポンス型が正しくない問題を修正
+- Fix: ハッシュタグに関連するデータを更新する際のエラーハンドリングを修正
+- Fix: Sentry 使用環境下にて、Misskey が発行した SQL クエリが span に含まれない問題を修正
+- Fix: Sentry 使用環境下にて、外部送信リクエストへ `sentry-trace` / `baggage` ヘッダーが既定で付与されないように
+- Fix: フォロワー限定投稿へのリプライをホーム投稿に出来る問題を修正
+- Fix: ファイルをアップロードするAPIにて、処理終了後に一時ファイルが削除されないことがある問題を修正
+- Fix: 初期設定で作成したアカウント以外でアカウント作成APIが使用できない問題を修正
+- Fix: フォロー中のチャンネルを再度フォローした際にALREADY_FOLLOWINGエラーを返すように
+- Fix: セキュリティに関する修正
+
 ## 2026.6.0
 
 ### General
@@ -13,13 +101,12 @@
 - Fix: URLプレビューのプレイヤーをウィンドウで開いたとき、プレイヤーが読み込まれるまでの間 `Invalid URL` と表示される問題を修正
 - Fix: 一部の実績が正しく表示されない問題を修正
 - Fix: アクセストークン発行時のダイアログのタイトルが「確認コード」となっているのを修正
-- Fix: 一部のUI要素の色が正しく表示されない問題を修正
+- Fix: 一部のUI要素の色が正しく表示されない問題を修正  
   (Cherry-picked from https://github.com/MisskeyIO/misskey/pull/1243)
 - Fix: 「D」キーでダークモードを切り替える際にsyncDeviceDarkModeのチェックがバイパスされる問題を修正
 - Fix: パスキー登録完了時の認証ダイアログの入力値が使われていない問題を修正
 - Fix: メンションのサジェスト時に表示されるアイコン表示が画像サイズ次第で崩れる問題を修正
 - Fix: ノートの下書きをリセットする際、未アップロードのファイルについては添付予定が解除されない問題を修正
-- Fix: ノート編集後にタイムラインやノート詳細が更新されないことがある問題を修正
 - Fix: 画像アップロード時、フレームのキャプション付与が正しく行われないことがある問題を修正
 
 ### Server
@@ -86,7 +173,7 @@
 - Fix: `.devcontainer/compose.yml`のvolumeのマウントパスを修正
 
 ### Client
-- Enhance: ノートの詳細表示での公開範囲の表示を改善
+- Enhance: ノートの詳細表示での公開範囲の表示を改善  
   (Cherry-picked from https://github.com/kokonect-link/cherrypick/commit/ecc75563f4e428b66adccc379bf317b5b21ed8e6)
 - Fix: ロール設定画面でロールをアサイン/アサイン解除した際、リロードしなくても画面に反映されるよう修正
 
@@ -111,7 +198,7 @@
 
 ### Server
 - Enhance: メモリ使用量を削減
-- Enhance: 起動の高速化
+- Enhance: 起動の高速化  
   (Cherry-picked from https://github.com/MisskeyIO/misskey/pull/1410)
 - Enhance: バックエンドの開発モード時の安定性向上
 - Enhance: バックエンドビルド・テスト時に使用する依存関係の整理（swc/esbuild→Rolldown, Jest→Vitest）
@@ -123,13 +210,13 @@
 - Fix: ID生成アルゴリズムにULIDを使用している場合にMisskeyが正しく動作しない問題を修正
 - Fix: リレー経由で届いたノートがリノートとして表示される問題を修正
 - Fix: robots.txtの内容を調整
-- Fix: 特定のユーザーに管理者権限を持つロールが複数ついている際に、取得できるユーザーIDが重複する問題を修正
+- Fix: 特定のユーザーに管理者権限を持つロールが複数ついている際に、取得できるユーザーIDが重複する問題を修正  
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/17ed4108cec4b6bd2fd989db5a9091db91fa37a7)
-- Fix: ブロックしたサーバーからのInboxジョブが蓄積し続ける問題を修正
+- Fix: ブロックしたサーバーからのInboxジョブが蓄積し続ける問題を修正  
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/3f0f4bfe923f2b3a7837017b54841598f421c6ef)
 - Fix: support activity with `actor` as an id string or embedded object in inbox processor and ActivityPub inbox service
 - Fix: コンフィグファイルに `meilisearch` の設定がある状態でほかの検索プロバイダを利用すると、UI上からリモートのノートの検索ができない問題を修正
-- Fix: ノートに関する通知で公開範囲が考慮されていない問題を修正
+- Fix: ノートに関する通知で公開範囲が考慮されていない問題を修正  
   (Cherry-picked from https://github.com/lqvp/misskey-tempura/commit/cbce96c520a138b8bcd16890ff6f2952830fa166 originally presented in https://github.com/yojo-art/cherrypick/pull/743)
 
 ## 2026.3.2
@@ -501,6 +588,7 @@ v2025.12.0で行われた「configの`trustProxy`のデフォルト値を`false`
 - Enhance: ウォーターマーク機能をロールで制御可能に
 
 ### Client
+- Note: 「自動でもっと見る」オプションは無効になっています
 - Feat: モデログを検索できるように
 - Enhance: 設定の自動バックアップをオンにした直後に自動バックアップするように
 - Enhance: ファイルアップロード前にキャプション設定を行えるように
@@ -1104,7 +1192,6 @@ v2025.12.0で行われた「configの`trustProxy`のデフォルト値を`false`
 ## 2024.9.0
 
 ### General
-- Feat: 編集された投稿の受信と投稿の編集ができるように
 - Feat: ノート単体・ユーザーのノート・クリップのノートの埋め込み機能
   - 埋め込みコードやウェブサイトへの実装方法の詳細は https://misskey-hub.net/docs/for-users/features/embed/ をご覧ください
 - Feat: パスキーでログインボタンを実装 (#14574)

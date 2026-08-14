@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /**
  * The Player module contains the actual {@link PlayerElement} and the various interfaces that exist to interact with the player.
  *

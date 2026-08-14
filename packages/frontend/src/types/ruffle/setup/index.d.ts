@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /**
  * The Setup module contains the interfaces and methods needed to install Ruffle onto a page,
  * and create a {@link PlayerElement} with the latest version of Ruffle available.

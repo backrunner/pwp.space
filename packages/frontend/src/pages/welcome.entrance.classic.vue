@@ -20,24 +20,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import * as Misskey from 'misskey-js';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
 import misskeysvg from '/client-assets/misskey.svg';
-import { misskeyApiGet } from '@/utility/misskey-api.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
-import { getProxiedImageUrl } from '@/utility/media-proxy.js';
 import { instance as meta } from '@/instance.js';
-
-const instances = ref<Misskey.entities.FederationInstance[]>();
-
-misskeyApiGet('federation/instances', {
-	sort: '+pubSub',
-	limit: 20,
-	blocked: false,
-}).then(_instances => {
-	instances.value = _instances;
-});
+import XTimeline from './welcome.timeline.vue';
 </script>
 
 <style lang="scss" module>
@@ -53,6 +40,8 @@ misskeyApiGet('federation/instances', {
 	right: 0;
 	width: 80vw; // 100%からshapeの幅を引いている
 	height: 100vh;
+	// 固定レイヤがホイール操作を奪い、コンテンツ列以外の上でページをスクロールできなくなるのを防ぐ (issue #17680)
+	pointer-events: none;
 }
 
 .tl {
@@ -81,6 +70,7 @@ misskeyApiGet('federation/instances', {
 	height: 100vh;
 	background: var(--MI_THEME-accent);
 	clip-path: polygon(0% 0%, 45% 0%, 20% 100%, 0% 100%);
+	pointer-events: none; // 装飾レイヤ。ホイール操作を透過させる (→ .bg 参照)
 }
 .shape2 {
 	position: fixed;
@@ -91,6 +81,7 @@ misskeyApiGet('federation/instances', {
 	background: var(--MI_THEME-accent);
 	clip-path: polygon(0% 0%, 25% 0%, 35% 100%, 0% 100%);
 	opacity: 0.5;
+	pointer-events: none; // 装飾レイヤ。ホイール操作を透過させる (→ .bg 参照)
 }
 
 .logoWrapper {
@@ -126,40 +117,4 @@ misskeyApiGet('federation/instances', {
 	}
 }
 
-.federation {
-	position: fixed;
-	bottom: 16px;
-	left: 0;
-	right: 0;
-	margin: auto;
-	background: color(from var(--MI_THEME-panel) srgb r g b / 0.5);
-	-webkit-backdrop-filter: var(--MI-blur, blur(15px));
-	backdrop-filter: var(--MI-blur, blur(15px));
-	border-radius: 999px;
-	overflow: clip;
-	width: 800px;
-	padding: 8px 0;
-
-	@media (max-width: 900px) {
-		display: none;
-	}
-}
-
-.federationInstance {
-	display: inline-flex;
-	align-items: center;
-	vertical-align: bottom;
-	padding: 6px 12px 6px 6px;
-	margin: 0 10px 0 0;
-	background: var(--MI_THEME-panel);
-	border-radius: 999px;
-}
-
-.federationInstanceIcon {
-	display: inline-block;
-	width: 20px;
-	height: 20px;
-	margin-right: 5px;
-	border-radius: 999px;
-}
 </style>

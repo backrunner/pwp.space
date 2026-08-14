@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Entity, Index, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Index, JoinColumn, Column, PrimaryColumn, ManyToOne } from 'typeorm';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
 import { MiNote } from './Note.js';
@@ -14,17 +14,31 @@ export class MiNoteHistory {
 	@PrimaryColumn(id())
 	public id: string;
 
-	@Index()
+	@Index('IDX_f23ad074619d2afe0f69da9a95')
 	@Column({
 		...id(),
 	})
 	public targetId: MiNote['id'];
+
+	@ManyToOne(() => MiNote, {
+		onDelete: 'CASCADE',
+	})
+	@JoinColumn({
+		name: 'targetId',
+		foreignKeyConstraintName: 'FK_aacf2074601e204e0f69da9a954',
+	})
+	public target: MiNote | null;
 
 	// TODO: varcharにしたい
 	@Column('text', {
 		nullable: true,
 	})
 	public text: string | null;
+
+	@Column('varchar', {
+		length: 256, nullable: true,
+	})
+	public name: string | null;
 
 	@Column('varchar', {
 		length: 512, nullable: true,

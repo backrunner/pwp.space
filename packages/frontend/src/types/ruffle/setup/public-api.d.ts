@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import type { SourceAPI } from './source-api.d.ts';
 import type { DataLoadOptions, URLLoadOptions } from '../config/index.d.ts';
 declare global {

@@ -361,6 +361,30 @@ export class NoteEntityService implements OnModuleInit {
 	}
 
 	@bindThis
+	public async isNoteContentVisibleByUserPolicy(note: MiNote, meId: MiUser['id'] | null): Promise<boolean> {
+		if (meId === note.userId) return true;
+		if (note.user == null) throw new Error('Note author relation is required to check content visibility.');
+
+		if (note.user.requireSigninToViewContents && meId == null) return false;
+
+		const createdAt = this.idService.parse(note.id).date;
+		if (shouldHideNoteByTime(note.user.makeNotesHiddenBefore, createdAt)) return false;
+
+		if (
+			(note.visibility === 'public' || note.visibility === 'home') &&
+			shouldHideNoteByTime(note.user.makeNotesFollowersOnlyBefore, createdAt)
+		) {
+			if (meId == null) return false;
+			if (note.replyUserId === meId || note.mentions.some(id => id === meId)) return true;
+
+			const followings = await this.cacheService.userFollowingsCache.fetch(meId);
+			return Object.hasOwn(followings, note.userId);
+		}
+
+		return true;
+	}
+
+	@bindThis
 	public async packAttachedFiles(fileIds: MiNote['fileIds'], packedFiles: Map<MiNote['fileIds'][number], Packed<'DriveFile'> | null>): Promise<Packed<'DriveFile'>[]> {
 		const missingIds = [];
 		for (const id of fileIds) {
@@ -661,9 +685,9 @@ export class NoteEntityService implements OnModuleInit {
 		);
 
 		return mentionedUsers;
-    }
-    
-    @bindThis
+	}
+
+	@bindThis
 	public async fetchDiffs(noteIds: MiNote['id'][]) {
 		if (noteIds.length === 0) return [];
 
@@ -673,6 +697,7 @@ export class NoteEntityService implements OnModuleInit {
 			},
 			select: {
 				id: true,
+				updatedAt: true,
 				userHost: true,
 				reactions: true,
 				reactionAndUserPairCache: true,
@@ -693,6 +718,7 @@ export class NoteEntityService implements OnModuleInit {
 
 			return this.customEmojiService.populateEmojis(reactionEmojiNames, note.userHost).then(reactionEmojis => ({
 				id: note.id,
+				updatedAt: note.updatedAt?.toISOString() ?? null,
 				reactions,
 				reactionEmojis,
 			}));

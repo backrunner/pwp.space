@@ -33,7 +33,7 @@ const isInBrowserTranslationAvailable = (
 
 export async function getNoteClipMenu(props: {
 	note: Misskey.entities.Note;
-	currentClip?: Misskey.entities.Clip;
+	currentClip?: Misskey.entities.Clip | null;
 }) {
 	function getClipName(clip: Misskey.entities.Clip) {
 		if ($i && clip.userId === $i.id && clip.notesCount != null) {
@@ -181,8 +181,8 @@ export function getNoteMenu(props: {
 	note: Misskey.entities.Note;
 	translation: Ref<Misskey.entities.NotesTranslateResponse | null>;
 	translating: Ref<boolean>;
-	currentClip?: Misskey.entities.Clip;
-	currentAntenna?: Misskey.entities.Antenna;
+	currentClip?: Misskey.entities.Clip | null;
+	currentAntenna?: Misskey.entities.Antenna | null;
 }) {
 	const appearNote = getAppearNote(props.note) ?? props.note;
 	const link = appearNote.url ?? appearNote.uri;
@@ -513,7 +513,10 @@ export function getNoteMenu(props: {
 
 		if (appearNote.userId === $i.id || $i.isModerator || $i.isAdmin) {
 			menuItems.push({ type: 'divider' });
-			if ($i.policies.canEditNote || $i.isModerator || $i.isAdmin) {
+			const canEdit = appearNote.userId === $i.id
+				? $i.policies.canEditNote || $i.isModerator || $i.isAdmin
+				: appearNote.user.host == null && ($i.isModerator || $i.isAdmin);
+			if (canEdit) {
 				menuItems.push({
 					icon: 'ti ti-edit',
 					text: i18n.ts.edit,

@@ -179,4 +179,3 @@ export class MetaEntityService {
 		return packDetailed;
 	}
 }
-

@@ -35,6 +35,7 @@ import XCommon from './_common_/common.vue';
 import type { PageMetadata } from '@/page.js';
 import { instance } from '@/instance.js';
 import { provideMetadataReceiver, provideReactiveMetadata } from '@/page.js';
+import { i18n } from '@/i18n.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
 import { mainRouter } from '@/router.js';
 import { DI } from '@/di.js';

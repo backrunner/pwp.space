@@ -13,18 +13,28 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 		<div>
 			<p v-if="cw != null && cw != ''" :class="$style.cw">
-				<Mfm :text="cw" :author="user" :nyaize="'respect'" :i="user" style="margin-right: 8px;"/>
+				<Mfm :text="cw" :author="user" :nyaize="'respect'" :i="user" :emojiUrls="emojis" style="margin-right: 8px;"/>
 				<MkCwButton v-model="showContent" :text="text.trim()" :files="files" :poll="poll" style="margin: 4px 0;"/>
 			</p>
 			<div v-show="cw == null || cw == '' || showContent">
-				<Mfm :text="text.trim()" :author="user" :nyaize="'respect'" :i="user"/>
-			</div>
-			<div v-if="files && files.length > 0">
-				<MkMediaList ref="galleryEl" :mediaList="files"/>
+				<Mfm :text="text.trim()" :author="user" :nyaize="'respect'" :i="user" :emojiUrls="emojis"/>
+				<div v-if="files.length > 0">
+					<MkMediaList :mediaList="files"/>
+				</div>
+				<MkPoll
+					v-if="poll"
+					:noteId="targetId"
+					:multiple="poll.multiple"
+					:expiresAt="poll.expiresAt"
+					:choices="poll.choices"
+					:author="user"
+					:emojiUrls="emojis"
+					readOnly
+				/>
 			</div>
 		</div>
 		<footer :class="$style.footer">
-			<button ref="menuButton" :class="$style.footerButton" class="_button" @mousedown.prevent="showMenu()">
+			<button ref="menuButton" :class="$style.footerButton" class="_button" :title="i18n.ts.menu" :aria-label="i18n.ts.menu" @click="showMenu()">
 				<i class="ti ti-dots"></i>
 			</button>
 		</footer>
@@ -35,20 +45,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
-import type { MenuItem } from '@/types/menu';
-import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
+import type { MenuItem } from '@/types/menu.js';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { copyToClipboard } from '@/utility/copy-to-clipboard';
+import { copyToClipboard } from '@/utility/copy-to-clipboard.js';
 import MkCwButton from '@/components/MkCwButton.vue';
 
 const showContent = ref(false);
 const menuButton = ref<HTMLButtonElement | null>(null);
 const props = defineProps<{
 	text: string;
+	targetId: string;
 	updatedAt: Date;
 	files: Misskey.entities.DriveFile[];
-	poll?: PollEditorModelValue;
+	poll?: Misskey.entities.NotesHistoriesResponse[number]['poll'];
+	emojis: Record<string, string>;
 	cw: string | null;
 	user: Misskey.entities.User;
 }>();
@@ -77,7 +88,7 @@ function showMenu() {
 	padding: 10px 10px 0 10px;
 	overflow: clip;
 	font-size: 1em;
-	border-top: solid .5px var(--divider);
+	border-top: solid .5px var(--MI_THEME-divider);
 }
 
 .avatar {

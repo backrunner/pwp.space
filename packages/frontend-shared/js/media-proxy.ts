@@ -8,8 +8,7 @@ import SparkMD5 from 'spark-md5';
 import { query } from './url.js';
 
 export const getProxySign = (targetUrl: string, signKey: string): string => {
-	const hash = SparkMD5.hash(`${targetUrl}_${signKey}_${window.location.origin}`);
-	return hash;
+	return SparkMD5.hash(`${targetUrl}_${signKey}_${window.location.origin}`);
 };
 
 export class MediaProxy {
@@ -27,7 +26,7 @@ export class MediaProxy {
 
 		if (imageUrl.startsWith(this.serverMetadata.mediaProxy + '/') || imageUrl.startsWith('/proxy/') || imageUrl.startsWith(localProxy + '/')) {
 			// もう既にproxyっぽそうだったらurlを取り出す
-			_imageUrl = (new URL(imageUrl)).searchParams.get('url') ?? imageUrl;
+			_imageUrl = (new URL(imageUrl, this.url)).searchParams.get('url') ?? imageUrl;
 		}
 
 		return `${mustOrigin ? localProxy : this.serverMetadata.mediaProxy}/${

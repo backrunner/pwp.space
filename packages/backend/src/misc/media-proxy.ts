@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { md5 } from './hash.js';
 
 export const getProxySign = (targetUrl: string, signKey: string, origin: string): string => {

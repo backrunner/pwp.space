@@ -9,10 +9,10 @@ import { $i } from '@/i.js';
 import { wsOrigin } from '@@/js/config.js';
 
 // heart beat interval in ms
-const HEART_BEAT_INTERVAL = 1000 * 10;
+const HEART_BEAT_INTERVAL = 1000 * 60;
 
 let stream: Misskey.IStream | null = null;
-let timeoutHeartBeat: number | undefined;
+let timeoutHeartBeat: number | null = null;
 let lastHeartbeatCall = 0;
 
 export function useStream(): Misskey.IStream {
@@ -22,7 +22,7 @@ export function useStream(): Misskey.IStream {
 		token: $i.token,
 	} : null));
 
-	if (timeoutHeartBeat !== undefined) window.clearTimeout(timeoutHeartBeat);
+	if (timeoutHeartBeat) window.clearTimeout(timeoutHeartBeat);
 	timeoutHeartBeat = window.setTimeout(heartbeat, HEART_BEAT_INTERVAL);
 
 	// send heartbeat right now when last send time is over HEART_BEAT_INTERVAL
@@ -42,4 +42,7 @@ function heartbeat(): void {
 	if (stream != null && window.document.visibilityState === 'visible') {
 		stream.heartbeat();
 	}
+	lastHeartbeatCall = Date.now();
+	if (timeoutHeartBeat) window.clearTimeout(timeoutHeartBeat);
+	timeoutHeartBeat = window.setTimeout(heartbeat, HEART_BEAT_INTERVAL);
 }

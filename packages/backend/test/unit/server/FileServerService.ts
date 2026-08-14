@@ -21,6 +21,7 @@ import { IdService } from '@/core/IdService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import { VideoProcessingService } from '@/core/VideoProcessingService.js';
 import { loadConfig, type Config } from '@/config.js';
+import { getProxySign } from '@/misc/media-proxy.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
 import { FileServerService } from '@/server/FileServerService.js';
 
@@ -29,6 +30,7 @@ const dummySize = fs.statSync(dummyPath).size;
 const dummyBuffer = fs.readFileSync(dummyPath);
 const svgBuffer = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"></svg>', 'utf8');
 const textBuffer = Buffer.from('dummy text', 'utf8');
+const externalMediaProxyKey = 'test-media-proxy-key';
 
 async function createRemoteFileServer() {
 	const flatPngBuffer = await sharp({
@@ -79,6 +81,7 @@ describe('FileServerService', () => {
 	let internalStorageService: InternalStorageService;
 	let idService: IdService;
 	let config: Config;
+	let externalConfig: Config;
 	let fileServerService: FileServerService;
 	let externalFileServerService: FileServerService;
 	let remoteServer: FastifyInstance;
@@ -95,6 +98,17 @@ describe('FileServerService', () => {
 		fs.mkdirSync(path.dirname(dest), { recursive: true });
 		fs.copyFileSync(dummyPath, dest);
 		storedPaths.push(dest);
+	}
+
+	function signedProxyUrl(targetUrl: string, params: Record<string, string> = {}) {
+		const searchParams = new URLSearchParams({
+			url: targetUrl,
+			...params,
+			...(config.mediaProxyKey != null ? {
+				sign: getProxySign(targetUrl, config.mediaProxyKey, config.url),
+			} : {}),
+		});
+		return `/proxy/any?${searchParams.toString()}`;
 	}
 
 	async function insertDriveFile(params: {
@@ -149,6 +163,7 @@ describe('FileServerService', () => {
 		const loggerService = new LoggerService();
 		const aiService = {
 			detectSensitive: async () => null,
+			detectSensitiveMany: async (sources: Buffer[]) => sources.map(() => null),
 		} as unknown as AiService;
 		const fileInfoService = new FileInfoService(aiService, loggerService);
 		const httpRequestService = new HttpRequestService(config);
@@ -176,11 +191,12 @@ describe('FileServerService', () => {
 		fileServerService.createServer(fastify, {}, () => {});
 		await fastify.ready();
 
-		const externalConfig = {
+		externalConfig = {
 			...config,
 			mediaProxy: 'https://media-proxy.test',
+			mediaProxyKey: externalMediaProxyKey,
 			externalMediaProxyEnabled: true,
-		} as Config;
+		};
 		externalFileServerService = new FileServerService(
 			externalConfig,
 			driveFilesRepository as any,
@@ -599,7 +615,21 @@ describe('FileServerService', () => {
 			expect(res.headers.location).toContain('https://media-proxy.test/');
 			expect(res.headers.location).toContain('url=https%3A%2F%2Fexample.com%2Fimg.png');
 			expect(res.headers.location).toContain('static=1');
+			expect(new URL(res.headers.location!).searchParams.get('sign')).toBe(getProxySign('https://example.com/img.png', externalMediaProxyKey, externalConfig.url));
 			expect(res.headers['content-security-policy']).toBe('default-src \'none\'; img-src \'self\'; media-src \'self\'; style-src \'unsafe-inline\'');
+		});
+
+		test('GET /proxy/:url* 不正な署名を拒否する', async () => {
+			const res = await externalFastify.inject({
+				method: 'GET',
+				url: `/proxy/any?url=${encodeURIComponent(remotePngUrl)}&origin=1&sign=invalid`,
+				headers: {
+					'user-agent': 'Mozilla/5.0',
+				},
+			});
+
+			expect(res.statusCode).toBe(400);
+			expect(res.headers['x-error-message']).toBe('Invalid signature');
 		});
 
 		test('GET /proxy/:url* misskey User-Agent を拒否する', async () => {
@@ -633,7 +663,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* emoji 指定で非画像は 404 を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remoteTextUrl)}&emoji=1`,
+				url: signedProxyUrl(remoteTextUrl, { emoji: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -646,7 +676,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* 非画像は 403 を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remoteTextUrl)}`,
+				url: signedProxyUrl(remoteTextUrl),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -659,7 +689,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* emoji static で webp を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remotePngUrl)}&emoji=1&static=1`,
+				url: signedProxyUrl(remotePngUrl, { emoji: '1', static: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -674,7 +704,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* avatar static で webp を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remotePngUrl)}&avatar=1&static=1`,
+				url: signedProxyUrl(remotePngUrl, { avatar: '1', static: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -689,7 +719,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* static で webp を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remotePngUrl)}&static=1`,
+				url: signedProxyUrl(remotePngUrl, { static: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -704,7 +734,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* preview で webp を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remotePngUrl)}&preview=1`,
+				url: signedProxyUrl(remotePngUrl, { preview: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -719,7 +749,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* svg を webp に変換する', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remoteSvgUrl)}`,
+				url: signedProxyUrl(remoteSvgUrl),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -734,7 +764,7 @@ describe('FileServerService', () => {
 		test('GET /proxy/:url* badge で低エントロピー画像は 404 を返す', async () => {
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(remoteFlatPngUrl)}&badge=1`,
+				url: signedProxyUrl(remoteFlatPngUrl, { badge: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},
@@ -755,7 +785,7 @@ describe('FileServerService', () => {
 
 			const res = await fastify.inject({
 				method: 'GET',
-				url: `/proxy/any?url=${encodeURIComponent(`${config.url}/files/${accessKey}`)}&origin=1`,
+				url: signedProxyUrl(`${config.url}/files/${accessKey}`, { origin: '1' }),
 				headers: {
 					'user-agent': 'Mozilla/5.0',
 				},

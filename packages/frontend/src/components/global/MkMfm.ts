@@ -452,16 +452,16 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 			}
 
 			case 'mathInline': {
-				const SKFormula = defineAsyncComponent(() => import('@/components/SKFormula.vue'));
-				return [h('bdi', h(SKFormula, {
+				const MkFormula = defineAsyncComponent(() => import('@/components/MkFormula.vue'));
+				return [h('bdi', h(MkFormula, {
 					formula: token.props.formula,
 					block: false,
 				}))];
 			}
 
 			case 'mathBlock': {
-				const SKFormula = defineAsyncComponent(() => import('@/components/SKFormula.vue'));
-				return [h('bdi', { class: 'block' }, h(SKFormula, {
+				const MkFormula = defineAsyncComponent(() => import('@/components/MkFormula.vue'));
+				return [h('bdi', { class: 'block' }, h(MkFormula, {
 					formula: token.props.formula,
 					block: true,
 				}))];
