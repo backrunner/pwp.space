@@ -32,8 +32,19 @@ allowBuilds:
   vue-demi: true
   exifreader: false
   protobufjs: false
+  pnpm: true
 minimumReleaseAge: 10080 # delay 7days to mitigate supply-chain attack
 minimumReleaseAgeExclude:
+  # Explicit toolchain upgrade; retain the default age policy for other packages.
+  - pnpm@12.3.4
+  - '@pnpm/exe.darwin-arm64@12.3.4'
+  - '@pnpm/exe.darwin-x64@12.3.4'
+  - '@pnpm/exe.linux-arm64@12.3.4'
+  - '@pnpm/exe.linux-arm64-musl@12.3.4'
+  - '@pnpm/exe.linux-x64@12.3.4'
+  - '@pnpm/exe.linux-x64-musl@12.3.4'
+  - '@pnpm/exe.win32-arm64@12.3.4'
+  - '@pnpm/exe.win32-x64@12.3.4'
   - '@misskey-dev/*'
   - '@syuilo/aiscript'
   - buraha
