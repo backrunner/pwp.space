@@ -10,7 +10,7 @@ import { mswLoader } from 'msw-storybook-addon/csf3';
 import { FORCE_RE_RENDER, FORCE_REMOUNT } from 'storybook/internal/core-events';
 import { addons } from 'storybook/preview-api';
 import { userDetailed } from './fakes.js';
-import { commonHandlers, onUnhandledRequest } from './mocks.js';
+import { commonHandlers, onUnhandledFrame } from './mocks.js';
 import themes from './themes.js';
 import '../src/style.scss';
 
@@ -89,7 +89,7 @@ function applyThemeGlobal(theme: unknown): void {
 async function setupMswWorker() {
 	const worker = setupWorker(...commonHandlers);
 	await worker.start({
-		onUnhandledRequest,
+		onUnhandledFrame,
 	});
 	return worker;
 }

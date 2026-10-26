@@ -24,7 +24,8 @@ import type { MiUser, MiRemoteUser } from '@/models/User.js';
 import type { IPoll } from '@/models/Poll.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
 import type { MiChannel } from '@/models/Channel.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
+import { normalizeTag } from '@/misc/normalize-tag.js';
+import { NoteCreateService } from '@/core/NoteCreateService.js';
 import { RelayService } from '@/core/RelayService.js';
 import { DI } from '@/di-symbols.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
@@ -40,7 +41,6 @@ import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { RoleService } from '@/core/RoleService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { SearchService } from '@/core/SearchService.js';
-import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { cleanLink } from '@/misc/link-cleaner.js';
@@ -119,7 +119,7 @@ export class NoteEditService implements OnApplicationShutdown {
 		private metaService: MetaService,
 		private searchService: SearchService,
 		private activeUsersChart: ActiveUsersChart,
-		private utilityService: UtilityService,
+		private noteCreateService: NoteCreateService,
 		private userBlockingService: UserBlockingService,
 		private moderationLogService: ModerationLogService,
 		private userWebhookService: UserWebhookService,
@@ -185,7 +185,11 @@ export class NoteEditService implements OnApplicationShutdown {
 		if (data.reactionAcceptance == null) data.reactionAcceptance = targetNote.reactionAcceptance;
 		const meta = await this.metaService.fetch();
 
-		if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', meta.prohibitedWords)) {
+		if (this.noteCreateService.checkProhibitedWordsContain({
+			cw: data.cw,
+			text: data.text,
+			pollChoices: data.poll?.choices,
+		}, meta.prohibitedWords)) {
 			throw new NoteEditService.ContainsProhibitedWordsError();
 		}
 
@@ -261,7 +265,7 @@ export class NoteEditService implements OnApplicationShutdown {
 			text: data.text,
 			hasPoll: data.poll != null,
 			cw: data.cw ?? null,
-			tags: tags.map(tag => normalizeForSearch(tag)),
+			tags: tags.map(tag => normalizeTag(tag)),
 			emojis,
 			userId: user.id,
 			reactionAcceptance: data.reactionAcceptance,

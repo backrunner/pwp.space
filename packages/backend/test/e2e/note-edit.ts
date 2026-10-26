@@ -156,6 +156,38 @@ describe('Note editing', () => {
 		]);
 	});
 
+	test.each([
+		{ text: 'https://%62locked.example/', cw: null, word: 'blocked.example' },
+		{ text: 'https://example.com/%62locked', cw: 'safe warning', word: 'blocked' },
+		{ text: 'safe body', cw: 'https://example.com/?q=%62locked', word: 'blocked' },
+	])('rejects normalized prohibited URLs when editing $text with CW $cw', async ({ text, cw, word }) => {
+		const note = await post(alice, { text: 'original safe body' });
+		assert.strictEqual((await api('admin/update-meta', { prohibitedWords: [word] }, root)).status, 204);
+
+		try {
+			const response = await api('notes/update', { noteId: note.id, text, cw }, alice);
+			assert.strictEqual(response.status, 400);
+			assert.strictEqual(castAsError(response.body as any).error.code, 'CONTAINS_PROHIBITED_WORDS');
+			const current = await api('notes/show', { noteId: note.id }, alice);
+			assert.strictEqual(current.body.text, 'original safe body');
+		} finally {
+			assert.strictEqual((await api('admin/update-meta', { prohibitedWords: [] }, root)).status, 204);
+		}
+	});
+
+	test('normalizes edited hashtags consistently with newly created notes', async () => {
+		const note = await post(alice, { text: 'before editing tags' });
+		assert.strictEqual((await api('notes/update', {
+			noteId: note.id,
+			text: '#ＡＢＣ',
+			cw: null,
+		}, alice)).status, 204);
+
+		const updated = await api('notes/show', { noteId: note.id }, alice);
+		assert.strictEqual(updated.status, 200);
+		assert.deepStrictEqual(updated.body.tags, ['abc']);
+	});
+
 	test('does not expose edit histories outside the note audience', async () => {
 		const note = await post(alice, {
 			text: 'private version 1',
