@@ -1172,8 +1172,7 @@ describe('CleanRemoteNotesProcessorService', () => {
 	// region maxDuration cutoff (CleanRemoteNotesProcessorService.ts:200-204)
 	describe('advanced - maxDuration', () => {
 		test('should stop processing when maxDuration is reached', async () => {
-			// 6ms 程度。初回バッチ後にループ先頭の経過時間チェックで必ず超過する
-			meta.remoteNotesCleaningMaxProcessingDurationInMinutes = 0.0001;
+			meta.remoteNotesCleaningMaxProcessingDurationInMinutes = 1;
 
 			const AMOUNT = 250;
 			const oldTime = Date.now() - ms(`${meta.remoteNotesCleaningExpiryDaysForEachNotes} days`) - 1000;
@@ -1181,19 +1180,40 @@ describe('CleanRemoteNotesProcessorService', () => {
 				await createNote({}, bob, oldTime - i);
 			}
 
-			const job = createMockJob();
-			const result = await service.process(job as any);
+			// Advance the clock after a real deletion so the next batch reaches the
+			// deadline regardless of database speed, without faking network timers.
+			const now = Date.now();
+			const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+			const deleteNotes = notesRepository.delete.bind(notesRepository);
+			const deletion = vi.spyOn(notesRepository, 'delete').mockImplementationOnce(async criteria => {
+				const result = await deleteNotes(criteria);
+				clock.mockReturnValue(now + 60 * 1000);
+				return result;
+			});
 
-			// maxDuration が極小なので、少なくとも 1 回はループ先頭の時間チェックで break する。
-			// （削除件数の上限はバッチサイズ・DB の速さに依存して timing-fragile になりやすいため、
-			// ここでは "Reached maximum duration" ログが出ていることのみを functional な保証とする）
-			expect(result.skipped).toBe(false);
-			expect(job.log).toHaveBeenCalledWith(expect.stringContaining('Reached maximum duration'));
-			expect(job.updateProgress).toHaveBeenCalledWith(100);
+			try {
+				const job = createMockJob();
+				const result = await service.process(job as any);
 
-			// 削除件数と残件数の総和が AMOUNT と一致
-			const remainingNotes = await notesRepository.find();
-			expect(remainingNotes.length + result.deletedCount).toBe(AMOUNT);
+				expect(result.skipped).toBe(false);
+				expect(job.log).toHaveBeenCalledWith(expect.stringContaining('Reached maximum duration'));
+				expect(job.updateProgress).toHaveBeenCalledWith(100);
+				expect(deletion).toHaveBeenCalledOnce();
+				expect(result.deletedCount).toBeGreaterThan(0);
+				expect(result.deletedCount).toBeLessThan(AMOUNT);
+				expect(result.cursor).not.toBeNull();
+				expect(await redisClient.get(CURSOR_REDIS_KEY)).toBe(result.cursor);
+
+				const remainingNotes = await notesRepository.find();
+				expect(remainingNotes.length + result.deletedCount).toBe(AMOUNT);
+
+				const resumed = await service.process(createMockJob() as any);
+				expect(resumed.deletedCount).toBe(remainingNotes.length);
+				expect(await notesRepository.count()).toBe(0);
+			} finally {
+				deletion.mockRestore();
+				clock.mockRestore();
+			}
 		}, 30 * 1000);
 	});
 
