@@ -38,6 +38,8 @@ for (const [browserName, browserType] of Object.entries({ webkit, chromium })) {
 	let assetVersion = 'asset-v1';
 	let storageFailure = '';
 	let offline = false;
+	let localeBody = '{}';
+	let assetContentType = 'text/javascript';
 	const server = createServer((request, response) => {
 		response.setHeader('Cache-Control', 'no-store');
 		if (request.url === '/sw.js') {
@@ -50,14 +52,20 @@ caches.open = async (...args) => {
  const cache = await openCache(...args);
  cache.put = async () => { throw new DOMException('full', 'QuotaExceededError'); };
  return cache;
+};\n` : storageFailure === 'write-stall' ? `const openCache = caches.open.bind(caches);
+caches.open = async (...args) => {
+ const cache = await openCache(...args);
+ cache.put = () => new Promise(() => {});
+ return cache;
 };\n` : '';
 			response.end(prefix + (workerVersion === 'broken' ? 'invalid javascript {' : workerVersion === 'legacy' ? legacy : bundles[workerVersion]));
 		} else if (request.url.startsWith('/assets/locales/')) {
 			response.setHeader('Content-Type', 'application/json');
-			response.end('{}');
+			response.end(localeBody);
 		} else if (request.url.startsWith('/assets/') || request.url.startsWith('/vite/') || request.url.startsWith('/api/')) {
 			if (request.url === '/api/failure/') response.statusCode = 503;
-			response.setHeader('Content-Type', 'text/plain');
+			if (request.url === '/vite/scripts/http-poisoned-12345678.js') response.setHeader('Cache-Control', 'max-age=3600');
+			response.setHeader('Content-Type', assetContentType);
 			response.end(assetVersion);
 		} else if (offline) {
 			response.destroy();
@@ -85,6 +93,10 @@ caches.open = async (...args) => {
 		await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
 	};
 	const requestText = (page, path, options) => page.evaluate(async ({ path, options }) => (await fetch(path, options)).text(), { path, options });
+	const waitForCached = (page, path, body) => page.waitForFunction(async ({ path, body }) => {
+		const cached = await caches.match(path);
+		return cached && await cached.text() === body;
+	}, { path, body });
 	try {
 		const page = await newPage();
 		await page.evaluate(async () => {
@@ -100,6 +112,8 @@ caches.open = async (...args) => {
 		assert.equal(await requestText(page, '/assets/app.js'), 'asset-v1');
 		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js'), 'asset-v1');
 		assert.equal(await requestText(page, '/vite/en-US/app-12345678.js'), 'asset-v1');
+		await waitForCached(page, '/vite/scripts/app-12345678.js', 'asset-v1');
+		await waitForCached(page, '/vite/en-US/app-12345678.js', 'asset-v1');
 		assetVersion = 'asset-v2';
 		assert.equal(await requestText(page, '/assets/app.js'), 'asset-v2');
 		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js'), 'asset-v1');
@@ -109,6 +123,41 @@ caches.open = async (...args) => {
 		assert.equal(await page.evaluate(async () => (await fetch('/api/failure/', { headers: { Accept: 'text/html' } })).status), 503);
 		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js', { method: 'POST' }), 'asset-v2');
 		console.log(`${browserName}: cache isolation, mutable assets, GET-only cache and API bypass PASS`);
+
+		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js', { cache: 'reload' }), 'asset-v2');
+		await waitForCached(page, '/vite/scripts/app-12345678.js', 'asset-v2');
+		assert.equal(await requestText(page, '/vite/en-US/app-12345678.js', { cache: 'no-cache' }), 'asset-v2');
+		await waitForCached(page, '/vite/en-US/app-12345678.js', 'asset-v2');
+		assetVersion = 'asset-v3';
+		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js', { cache: 'no-store' }), 'asset-v3');
+		assert.equal(await requestText(page, '/vite/scripts/app-12345678.js'), 'asset-v2');
+		assert.equal(await requestText(page, '/vite/scripts/uncached-12345678.js', { cache: 'no-store' }), 'asset-v3');
+		assert.equal(await page.evaluate(async () => !!await caches.match('/vite/scripts/uncached-12345678.js')), false);
+		assetVersion = 'asset-v2';
+		console.log(`${browserName}: reload/no-cache refresh entries, no-store bypasses reads and writes PASS`);
+
+		await page.evaluate(async () => {
+			const cache = await caches.open('misskey-static-v2-test-v1');
+			await cache.put('/vite/scripts/poisoned-12345678.js', new Response('<html>Error</html>', { headers: { 'content-type': 'text/html' } }));
+			await cache.put('/vite/scripts/failed-12345678.js', new Response('unavailable', { status: 503, headers: { 'content-type': 'text/javascript' } }));
+		});
+		assert.equal(await requestText(page, '/vite/scripts/poisoned-12345678.js'), 'asset-v2');
+		assert.equal(await requestText(page, '/vite/scripts/failed-12345678.js'), 'asset-v2');
+		await waitForCached(page, '/vite/scripts/poisoned-12345678.js', 'asset-v2');
+		assetContentType = 'text/html';
+		await requestText(page, '/vite/scripts/transient-12345678.js');
+		assert.equal(await page.evaluate(async () => !!await caches.match('/vite/scripts/transient-12345678.js')), false);
+		assetVersion = 'cached HTML error';
+		await requestText(page, '/vite/scripts/http-poisoned-12345678.js');
+		await page.evaluate(async () => {
+			await (await caches.open('misskey-static-v2-test-v1')).put('/vite/scripts/http-poisoned-12345678.js', new Response('cached HTML error', { headers: { 'content-type': 'text/html' } }));
+		});
+		assetVersion = 'asset-v2';
+		assetContentType = 'text/javascript';
+		assert.equal(await requestText(page, '/vite/scripts/http-poisoned-12345678.js'), 'asset-v2');
+		assert.equal(await requestText(page, '/vite/scripts/transient-12345678.js'), 'asset-v2');
+		console.log(`${browserName}: poisoned cache entries recover and HTML errors are not cached as scripts PASS`);
+
 		workerVersion = 'broken';
 		assert(await page.evaluate(async () => {
 			try {
@@ -157,6 +206,39 @@ caches.open = async (...args) => {
 		await migrated.waitForFunction(async () => !(await navigator.serviceWorker.getRegistration()).waiting);
 		console.log(`${browserName}: legacy skipWaiting worker migration PASS`);
 
+		const corruptLocale = await newPage();
+		await register(corruptLocale);
+		await corruptLocale.evaluate(async () => {
+			await (await caches.open('mk-cache-test-v2')).put('/assets/locales/en-US.test-v2.json', new Response('{broken'));
+		});
+		localeBody = JSON.stringify({ _offlineScreen: { header: 'Recovered translation' } });
+		offline = true;
+		await corruptLocale.goto(`${origin}/offline-corrupt-locale`);
+		assert((await corruptLocale.locator('body').innerText()).includes('Recovered translation'));
+		offline = false;
+		const retryLocale = await newPage();
+		await register(retryLocale);
+		localeBody = '{invalid network JSON';
+		offline = true;
+		await retryLocale.goto(`${origin}/offline-locale-first-attempt`);
+		assert((await retryLocale.locator('body').innerText()).includes('Could not connect to server'));
+		assert.equal(await retryLocale.evaluate(async () => !!await caches.match('/assets/locales/en-US.test-v2.json')), false);
+		localeBody = JSON.stringify({ _offlineScreen: { header: 'Recovered after retry' } });
+		await retryLocale.goto(`${origin}/offline-locale-second-attempt`);
+		assert((await retryLocale.locator('body').innerText()).includes('Recovered after retry'));
+		offline = false;
+		localeBody = '{}';
+		console.log(`${browserName}: corrupt locale cache and failed locale fetch recover without a worker restart PASS`);
+
+		await migrated.evaluate(async () => {
+			await caches.open('misskey-static-clear-test');
+			await caches.open('mk-cache-clear-test');
+			await caches.open('unrelated-app');
+			navigator.serviceWorker.controller.postMessage('clear');
+		});
+		await migrated.waitForFunction(async () => (await caches.keys()).every(name => !name.startsWith('mk-cache-') && !name.startsWith('misskey-static-')));
+		assert((await migrated.evaluate(() => caches.keys())).includes('unrelated-app'));
+
 		storageFailure = 'denied';
 		const denied = await newPage();
 		await register(denied);
@@ -172,6 +254,20 @@ caches.open = async (...args) => {
 		assert.equal(await requestText(quota, '/vite/scripts/app-12345678.js'), 'asset-v2');
 		assert.equal(await requestText(quota, '/vite/scripts/app-12345678.js'), 'asset-v2');
 		console.log(`${browserName}: cache write quota failures preserve network responses PASS`);
+
+		storageFailure = 'write-stall';
+		const stalled = await newPage();
+		await register(stalled);
+		const stalledResponse = await stalled.evaluate(async () => Promise.race([
+			fetch('/vite/scripts/app-12345678.js').then(response => response.text()),
+			new Promise(resolve => setTimeout(() => resolve('timed out waiting for Cache.put'), 3000)),
+		]));
+		assert.equal(stalledResponse, 'asset-v2');
+		offline = true;
+		await stalled.goto(`${origin}/offline-cache-write-stall`, { timeout: 5000 });
+		assert((await stalled.locator('body').innerText()).includes('Could not connect to server'));
+		offline = false;
+		console.log(`${browserName}: stalled cache writes do not delay assets or offline navigation PASS`);
 	} finally {
 		await Promise.all(contexts.map(context => context.close()));
 		await browser.close();

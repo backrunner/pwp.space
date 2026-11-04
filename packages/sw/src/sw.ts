@@ -20,7 +20,8 @@ async function respondToNavigation(request: Request): Promise<Response> {
 	}, FETCH_TIMEOUT_MS);
 
 	try {
-		const response = await fetch(request, { signal: controller.signal });
+		// Revalidate the document so it does not reference assets from an old deploy.
+		const response = await fetch(request, { signal: controller.signal, cache: 'no-cache' });
 
 		if (response?.status && response.status < 500) return response;
 		if (response?.type === 'opaqueredirect') return response;
@@ -68,20 +69,39 @@ function isImmutableAsset(request: Request): boolean {
 		/^\/vite\/(scripts|assets|[a-z]{2,3}-[A-Z]{2,3})\/[^/]+-[\w-]{8}\.[\w.]+$/.test(url.pathname);
 }
 
-async function respondToAsset(request: Request): Promise<Response> {
+function isUsableAsset(request: Request, response: Response): boolean {
+	if (response.status !== 200 || response.redirected) return false;
+	const mime = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
+	const path = new URL(request.url).pathname;
+	if (/\.m?js$/.test(path)) return /^(text|application)\/(javascript|ecmascript)$/.test(mime ?? '');
+	if (path.endsWith('.css')) return mime === 'text/css';
+	return mime !== 'text/html';
+}
+
+async function respondToAsset(ev: FetchEvent): Promise<Response> {
+	const request = ev.request;
+	if (request.cache === 'no-store') return fetch(request);
+
 	let cache: Cache | undefined;
+	let invalidCachedResponse = false;
 	try {
 		cache = await caches.open(STATIC_CACHE_NAME);
-		const cached = await cache.match(request);
-		if (cached) return cached;
+		// CacheStorage does not implement Request.cache for us.
+		if (request.cache !== 'reload' && request.cache !== 'no-cache') {
+			const cached = await cache.match(request);
+			if (cached && isUsableAsset(request, cached)) return cached;
+			invalidCachedResponse = cached !== undefined;
+		}
 	} catch {
 		// Safari can deny or evict CacheStorage. Network requests must still work.
 	}
 
-	const response = await fetch(request);
-	if (cache && response.ok && response.type === 'basic') {
+	// Do not repair a bad CacheStorage entry with the same bad HTTP-cache entry.
+	const response = await fetch(request, invalidCachedResponse ? { cache: 'reload' } : undefined);
+	if (cache && response.type === 'basic' && isUsableAsset(request, response)) {
 		try {
-			await cache.put(request, response.clone());
+			// Keep the worker alive for storage, but return the resource immediately.
+			ev.waitUntil(cache.put(request, response.clone()).catch(() => {}));
 		} catch {
 			// A full or unavailable cache must not turn a successful fetch into an error.
 		}
@@ -121,7 +141,7 @@ globalThis.addEventListener('activate', ev => {
 
 globalThis.addEventListener('fetch', ev => {
 	if (isImmutableAsset(ev.request)) {
-		ev.respondWith(respondToAsset(ev.request));
+		ev.respondWith(respondToAsset(ev));
 		return;
 	}
 
@@ -268,10 +288,10 @@ globalThis.addEventListener('notificationclose', (ev: ServiceWorkerGlobalScopeEv
 globalThis.addEventListener('message', (ev: ServiceWorkerGlobalScopeEventMap['message']) => {
 	ev.waitUntil((async (): Promise<void> => {
 		if (ev.data === 'clear') {
-			await caches.keys()
-				.then(cacheNames => Promise.all(
-					cacheNames.map(name => caches.delete(name)),
-				));
+			await caches.keys().then(cacheNames => Promise.allSettled(
+				cacheNames.filter(name => name.startsWith('misskey-static-') || name.startsWith('mk-cache-'))
+					.map(name => caches.delete(name)),
+			)).catch(() => {});
 			return;
 		}
 
@@ -280,7 +300,8 @@ globalThis.addEventListener('message', (ev: ServiceWorkerGlobalScopeEventMap['me
 
 			if (otype === 'object') {
 				if (ev.data.msg === 'initialize') {
-					await swLang.setLang(ev.data.lang);
+					// Optional translation fetching must not reject the message event offline.
+					await swLang.setLang(ev.data.lang).catch(() => {});
 				}
 			}
 		}

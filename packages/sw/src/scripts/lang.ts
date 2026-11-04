@@ -11,6 +11,12 @@ import { I18n } from '@@/js/i18n.js';
 import { FETCH_TIMEOUT_MS } from '@/const.js';
 import type { Locale } from 'i18n';
 
+async function parseLocale(response: Response): Promise<I18n<Locale>> {
+	const locale = await response.json();
+	if (locale === null || typeof locale !== 'object' || Array.isArray(locale)) throw new Error('invalid locale');
+	return new I18n<Locale>(locale);
+}
+
 class SwLang {
 	public cacheName = `mk-cache-${_VERSION_}`;
 
@@ -28,40 +34,45 @@ class SwLang {
 	public i18n: Promise<I18n<Locale>> | null = null;
 
 	public fetchLocale(): Promise<I18n<Locale>> {
-		return (this.i18n = this._fetch());
+		const pending = this._fetch().catch(error => {
+			// A temporary failure must not poison all future notifications/navigation.
+			if (this.i18n === pending) this.i18n = null;
+			throw error;
+		});
+		return (this.i18n = pending);
 	}
 
 	private async _fetch(): Promise<I18n<Locale>> {
 		// Service Workerは何度も起動しそのたびにlocaleを読み込むので、CacheStorageを使う
 		const localeUrl = `/assets/locales/${await this.lang}.${_VERSION_}.json`;
 		let cache: Cache | undefined;
-		let localeRes: Response | undefined;
 		try {
 			cache = await caches.open(this.cacheName);
-			localeRes = await cache.match(localeUrl);
-		} catch {
-			// CacheStorage may be unavailable in Safari.
-		}
-
-		// _DEV_がtrueの場合は常に最新化
-		if (!localeRes || _DEV_) {
-			const controller = new AbortController();
-			const timeout = globalThis.setTimeout(() => {
-				controller.abort('locale-fetch-timeout');
-			}, FETCH_TIMEOUT_MS);
-
-			try {
-				localeRes = await fetch(localeUrl, { signal: controller.signal });
-
-				if (!localeRes.ok) throw new Error('locale fetching error');
-
-				await cache?.put(localeUrl, localeRes.clone()).catch(() => {});
-			} finally {
-				globalThis.clearTimeout(timeout);
+			if (!_DEV_) {
+				const cached = await cache.match(localeUrl);
+				if (cached?.ok) return await parseLocale(cached);
 			}
+		} catch {
+			// Unavailable storage or invalid cached JSON must fall back to the network.
 		}
 
-		return new I18n<Locale>(await localeRes.json());
+		const controller = new AbortController();
+		const timeout = globalThis.setTimeout(() => {
+			controller.abort('locale-fetch-timeout');
+		}, FETCH_TIMEOUT_MS);
+
+		try {
+			const response = await fetch(localeUrl, { signal: controller.signal, cache: 'no-cache' });
+			if (!response.ok) throw new Error('locale fetching error');
+
+			const cacheResponse = response.clone();
+			const locale = await parseLocale(response);
+			// Store only parsed JSON. Storage latency must not delay an offline page.
+			void cache?.put(localeUrl, cacheResponse).catch(() => {});
+			return locale;
+		} finally {
+			globalThis.clearTimeout(timeout);
+		}
 	}
 }
 

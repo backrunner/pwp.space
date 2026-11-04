@@ -7,8 +7,21 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('@@/js/config.js', () => ({ lang: 'en-US' }));
 
-beforeEach(() => vi.resetModules());
+const removeListeners: (() => void)[] = [];
+beforeEach(() => {
+	vi.resetModules();
+	// Module resets do not remove listeners from happy-dom's shared document.
+	const targets: EventTarget[] = [window, window.document];
+	for (const target of targets) {
+		const addEventListener = target.addEventListener.bind(target);
+		vi.spyOn(target, 'addEventListener').mockImplementation((type, listener, options) => {
+			addEventListener(type, listener, options);
+			removeListeners.push(() => target.removeEventListener(type, listener, options));
+		});
+	}
+});
 afterEach(() => {
+	for (const remove of removeListeners.splice(0)) remove();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 });
@@ -21,7 +34,7 @@ function setup() {
 		register: vi.fn().mockResolvedValue(registration),
 		ready: Promise.resolve(registration),
 	});
-	vi.stubGlobal('navigator', { serviceWorker });
+	vi.stubGlobal('navigator', { serviceWorker, onLine: true });
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
 	return { active, registration, serviceWorker };
 }
@@ -67,9 +80,59 @@ describe('service worker initialization', () => {
 		expect(serviceWorker.register).toHaveBeenCalledTimes(2);
 	});
 
+	test('retries failed registration when the network returns', async () => {
+		const { serviceWorker } = setup();
+		serviceWorker.register.mockRejectedValueOnce(new Error('offline'));
+		const { initializeSw } = await import('@/utility/initialize-sw.js');
+		await initializeSw();
+		window.dispatchEvent(new Event('online'));
+		await vi.waitFor(() => expect(serviceWorker.register).toHaveBeenCalledTimes(2));
+	});
+
+	test('coalesces resume checks, skips offline checks and retries on reconnect', async () => {
+		const { registration } = setup();
+		const { initializeSw } = await import('@/utility/initialize-sw.js');
+		await initializeSw();
+		vi.spyOn(window.document, 'visibilityState', 'get').mockReturnValue('visible');
+		let completeUpdate!: () => void;
+		registration.update.mockImplementationOnce(() => new Promise<void>(resolve => { completeUpdate = resolve; }));
+		window.document.dispatchEvent(new Event('visibilitychange'));
+		window.dispatchEvent(new Event('online'));
+		expect(registration.update).toHaveBeenCalledOnce();
+		completeUpdate();
+		await Promise.resolve();
+		window.document.dispatchEvent(new Event('visibilitychange'));
+		expect(registration.update).toHaveBeenCalledOnce();
+		Object.assign(navigator, { onLine: false });
+		window.dispatchEvent(new Event('online'));
+		expect(registration.update).toHaveBeenCalledOnce();
+		Object.assign(navigator, { onLine: true });
+		window.dispatchEvent(new Event('online'));
+		expect(registration.update).toHaveBeenCalledTimes(2);
+	});
+
+	test('contains controller messaging errors during startup and activation', async () => {
+		const { active, serviceWorker } = setup();
+		active.postMessage.mockImplementation(() => { throw new Error('redundant worker'); });
+		const { initializeSw } = await import('@/utility/initialize-sw.js');
+		await expect(initializeSw()).resolves.toBeUndefined();
+		expect(() => serviceWorker.dispatchEvent(new Event('controllerchange'))).not.toThrow();
+		expect(console.warn).toHaveBeenCalledWith('Service worker initialization failed', expect.any(Error));
+	});
+
 	test('allows browsers without service worker support to boot', async () => {
 		vi.stubGlobal('navigator', {});
 		const { initializeSw } = await import('@/utility/initialize-sw.js');
 		await expect(initializeSw()).resolves.toBeUndefined();
+	});
+
+	test('allows startup when access to the service worker container is denied', async () => {
+		setup();
+		vi.stubGlobal('navigator', Object.defineProperty({}, 'serviceWorker', {
+			get() { throw new DOMException('denied', 'SecurityError'); },
+		}));
+		const { initializeSw } = await import('@/utility/initialize-sw.js');
+		await expect(initializeSw()).resolves.toBeUndefined();
+		expect(console.warn).toHaveBeenCalledWith('Service worker registration failed', expect.any(DOMException));
 	});
 });
