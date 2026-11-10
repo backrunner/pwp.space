@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 		<div :class="$style.buttons">
 			<MkButton inline success @click="approveAccount()">{{ i18n.ts.approveAccount }}</MkButton>
-			<MkButton inline danger @click="deleteAccount()">{{ i18n.ts.denyAccount }}</MkButton>
+			<MkButton v-if="$i?.isAdmin" inline danger @click="deleteAccount()">{{ i18n.ts.denyAccount }}</MkButton>
 		</div>
 	</div>
 </MkFolder>
@@ -38,6 +38,7 @@ import MkFolder from '@/components/MkFolder.vue';
 import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
+import { $i } from '@/i.js';
 
 const props = defineProps<{
 	user: Misskey.entities.UserDetailed;

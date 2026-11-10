@@ -9,6 +9,8 @@ import type { UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { DI } from '@/di-symbols.js';
 import { EmailService } from '@/core/EmailService.js';
+import { CacheService } from '@/core/CacheService.js';
+import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -46,21 +48,29 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private moderationLogService: ModerationLogService,
 		private emailService: EmailService,
+		private cacheService: CacheService,
+		private globalEventService: GlobalEventService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
 
-			if (user == null) {
+			if (user == null || user.host !== null || user.isDeleted) {
 				throw new ApiError(meta.errors.noSuchUser);
 			}
 
 			const result = await this.usersRepository.update({
 				id: user.id,
 				approved: false,
+				isDeleted: false,
 			}, {
 				approved: true,
 			});
 			if (result.affected !== 1) return;
+
+			this.cacheService.userByIdCache.delete(user.id);
+			this.cacheService.localUserByIdCache.delete(user.id);
+			if (user.token) this.cacheService.localUserByNativeTokenCache.delete(user.token);
+			this.globalEventService.publishInternalEvent('localUserUpdated', { id: user.id });
 
 			const profile = await this.userProfilesRepository.findOneBy({ userId: ps.userId });
 

@@ -18,6 +18,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkSwitch>
 				</SearchMarker>
 
+				<SearchMarker :keywords="['approval', 'registration', 'signup']">
+					<MkSwitch :modelValue="approvalRequiredForSignup" :disabled="savingApprovalRequiredForSignup" data-testid="signup-approval-required" @update:modelValue="onChange_approvalRequiredForSignup">
+						<template #label><SearchLabel>{{ i18n.ts.approvalRequiredForSignup }}</SearchLabel></template>
+					</MkSwitch>
+				</SearchMarker>
+
 				<SearchMarker :keywords="['email', 'required', 'signup']">
 					<MkSwitch v-model="emailRequiredForSignup" @change="onChange_emailRequiredForSignup">
 						<template #label><SearchLabel>{{ i18n.ts.emailRequiredForSignup }}</SearchLabel> ({{ i18n.ts.recommended }})</template>
@@ -174,6 +180,8 @@ import MkSelect from '@/components/MkSelect.vue';
 const meta = await misskeyApi('admin/meta');
 
 const enableRegistration = ref(!meta.disableRegistration);
+const approvalRequiredForSignup = ref(meta.approvalRequiredForSignup);
+const savingApprovalRequiredForSignup = ref(false);
 const emailRequiredForSignup = ref(meta.emailRequiredForSignup);
 const {
 	model: ugcVisibilityForVisitor,
@@ -211,6 +219,20 @@ async function onChange_enableRegistration(value: boolean) {
 	}).then(() => {
 		fetchInstance(true);
 	});
+}
+
+async function onChange_approvalRequiredForSignup(value: boolean) {
+	if (savingApprovalRequiredForSignup.value) return;
+	savingApprovalRequiredForSignup.value = true;
+	try {
+		await os.apiWithDialog('admin/update-meta', { approvalRequiredForSignup: value });
+		approvalRequiredForSignup.value = value;
+		await fetchInstance(true);
+	} catch {
+		// The API helper already displayed the error.
+	} finally {
+		savingApprovalRequiredForSignup.value = false;
+	}
 }
 
 function onChange_emailRequiredForSignup(value: boolean) {

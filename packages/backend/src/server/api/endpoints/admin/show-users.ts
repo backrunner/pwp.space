@@ -69,8 +69,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				case 'available': query.where('user.isSuspended = FALSE'); break;
 				case 'alive': query.where('user.updatedAt > :date', { date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5) }); break;
 				case 'suspended': query.where('user.isSuspended = TRUE'); break;
-					case 'pendingApproval':
-					case 'approved': query.where('user.approved = FALSE'); break;
+				case 'pendingApproval':
+				case 'approved': query.where('user.approved = FALSE').andWhere('user.isDeleted = FALSE').andWhere('user.host IS NULL'); break;
 				case 'admin': {
 					const adminIds = await this.roleService.getAdministratorIds();
 					if (adminIds.length === 0) return [];
